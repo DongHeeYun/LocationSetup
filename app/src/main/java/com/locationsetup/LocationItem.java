@@ -13,13 +13,13 @@ public class LocationItem {
     private double longitude;
 
     //설정을 위한 변수
-    private int wifi=0;       //0=default 1=on 2=off
-    private int bluetooth=0;  //0=default 1=on 2=off
-    private int location=0;   //0=default 1=on 2=off
-    private int sound=0;      //0=default 1=off 2=진동 3=on
-    private int volume=0;     //0~100
-    private int nfc=0;        //0=default 1=on 2=off
-    private int data=0;       //0=default 1=on 2=off
+    private int wifi;       //0=default 1=on 2=off
+    private int bluetooth;  //0=default 1=on 2=off
+    private int location;   //0=default 1=on 2=off
+    private int sound;      //0=default 1=off 2=진동 3=on
+    private int volume;     //0~100
+    private int nfc;        //0=default 1=on 2=off
+    private int data;       //0=default 1=on 2=off
 
     public LocationItem(String locationName, String address){
         this.locationName=locationName;
@@ -32,42 +32,42 @@ public class LocationItem {
         this.longitude = longitude;
     }
 
-    public void rotateWifi(){
+    public void changeWifi(){
         if(wifi<2)
             wifi++;
         else
             wifi=0;
     }
 
-    public void rotateBluetooth(){
+    public void changeBluetooth(){
         if(bluetooth<2)
             bluetooth++;
         else
             bluetooth=0;
     }
 
-    public void rotateLocation(){
+    public void changeLocation(){
         if(location<2)
             location++;
         else
             location=0;
     }
 
-    public void rotateSound(){
+    public void changeSound(){
         if(sound<3)
             sound++;
         else
             sound=0;
     }
 
-    public void rotateNfc(){
+    public void changeNfc(){
         if(nfc<2)
             nfc++;
         else
             nfc=0;
     }
 
-    public void rotateData(){
+    public void changeData(){
         if(data<2)
             data++;
         else
@@ -78,56 +78,28 @@ public class LocationItem {
         return wifi;
     }
 
-    public void setWifi(int wifi) {
-        this.wifi = wifi;
-    }
-
     public int getBluetooth() {
         return bluetooth;
-    }
-
-    public void setBluetooth(int bluetooth) {
-        this.bluetooth = bluetooth;
     }
 
     public int getLocation() {
         return location;
     }
 
-    public void setLocation(int location) {
-        this.location = location;
-    }
-
     public int getSound() {
         return sound;
-    }
-
-    public void setSound(int sound) {
-        this.sound = sound;
     }
 
     public int getVolume() {
         return volume;
     }
 
-    public void setVolume(int volume) {
-        this.volume = volume;
-    }
-
     public int getNfc() {
         return nfc;
     }
 
-    public void setNfc(int nfc) {
-        this.nfc = nfc;
-    }
-
     public int getData() {
         return data;
-    }
-
-    public void setData(int data) {
-        this.data = data;
     }
 
 
