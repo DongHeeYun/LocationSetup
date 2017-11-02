@@ -90,6 +90,10 @@ public class LocationItem {
         return sound;
     }
 
+    public void setVolume(int volume){
+        this.volume = volume;
+    }
+
     public int getVolume() {
         return volume;
     }
