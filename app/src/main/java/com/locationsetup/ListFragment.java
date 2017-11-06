@@ -42,9 +42,9 @@ public class ListFragment extends Fragment {
     }
 
     private void tempCreate(View view){
-        LocationItem locationItem = new LocationItem("house","address");
+        LocationItem locationItem = new LocationItem("house","금란교회");
         ArrayList<LocationItem> locationItems = new ArrayList<LocationItem>();
-        locationItems.add(new LocationItem("school","address"));
+        locationItems.add(new LocationItem("school","한성대학교"));
 
         RecyclerView reView = (RecyclerView) view.findViewById(R.id.reView);
 

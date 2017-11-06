@@ -1,5 +1,17 @@
 package com.locationsetup;
 
+import android.Manifest;
+import android.location.Address;
+import android.location.Geocoder;
+import android.widget.Toast;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+
+import pub.devrel.easypermissions.AfterPermissionGranted;
+import pub.devrel.easypermissions.EasyPermissions;
+
 /**
  * Created by inter on 2017-11-01.
  */
@@ -21,15 +33,37 @@ public class LocationItem {
     private int nfc;        //0=default 1=on 2=off
     private int data;       //0=default 1=on 2=off
 
+    static Geocoder geocoder;
+
+
+
     public LocationItem(String locationName, String address){
         this.locationName=locationName;
         this.address = address;
+        findAddress(address);
     }
 
     public LocationItem(String locationName, double latitude, double longitude){
         this.locationName = locationName;
+        this.address = locationName;
         this.latitude = latitude;
         this.longitude = longitude;
+    }
+
+    private void findAddress(String address){
+        if(LocationItem.geocoder==null){
+            geocoder = new Geocoder(MainActivity.context, Locale.KOREA);
+        }
+        try {
+            List<Address> addresses = LocationItem.geocoder.getFromLocationName(address, 1);
+            if (addresses.size() > 0) {
+                Address addr = (Address) addresses.get(0);
+                this.latitude = addr.getLatitude();
+                this.longitude = addr.getLongitude();
+            }
+        } catch (IOException e){
+            return;
+        }
     }
 
     public void changeWifi(){
