@@ -3,6 +3,7 @@ package com.locationsetup;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -117,6 +118,8 @@ public class MainActivity extends AppCompatActivity {
                 mDrawerLayout.openDrawer(GravityCompat.START);
                 return true;
             case R.id.action_settings:
+                Intent intent = new Intent(this,SettingActivity.class);
+                startActivity(intent);
                 return true;
         }
 

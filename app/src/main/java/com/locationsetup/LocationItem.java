@@ -9,9 +9,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
-import pub.devrel.easypermissions.AfterPermissionGranted;
-import pub.devrel.easypermissions.EasyPermissions;
-
 /**
  * Created by inter on 2017-11-01.
  */
