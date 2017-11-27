@@ -76,7 +76,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
         LocationItem locationItem = locationItems.get(position);
 
         TextView textView = holder.nameTextView;
-        textView.setText(locationItem.getLocationName());
+        textView.setText(locationItem.getTitle());
         //TODO: button setup
     }
 

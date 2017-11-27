@@ -12,16 +12,25 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -32,20 +41,27 @@ import pub.devrel.easypermissions.EasyPermissions;
  * Created by inter on 2017-11-07.
  */
 
-public class SettingActivity extends AppCompatActivity implements View.OnClickListener{
+public class SettingActivity extends AppCompatActivity implements View.OnClickListener,OnMapReadyCallback, SeekBar.OnSeekBarChangeListener{
     private static final String TAG = "SettingActivity";
 
     private static final int RC_LOCATION=1;
 
     private Context context;
 
+    private Marker marker;
+
     EditText set_title, set_address;
-    Button set_wifi, set_blue, set_loca, set_nfc, set_data, set_sound, set_search, set_cancle, set_save;
-    SeekBar set_seekbar;
+    Button set_wifi, set_blue, set_sound, set_bright, set_search, set_cancle, set_save;
+    SeekBar sound_seekbar, bright_seekbar;
+    SupportMapFragment mapFragment;
+    LinearLayout soundLayout, brightLayout;
+
 
     private FusedLocationProviderClient mFusedLocationClient;
     LocationItem locationItem;
     Location location;
+
+    FileManager fileManager;
 
 
 
@@ -57,7 +73,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         getLastLocation();
         initView();
-
+        fileManager = FileManager.getFileManager();
     }
 
     @SuppressWarnings("MissingPermission")
@@ -77,9 +93,12 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                                     List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(),1);
                                     if (addresses.size() >0) {
                                         Address address = addresses.get(0);
-                                        String s = String.format("%s %s %s %s", address.getFeatureName(), address.getThoroughfare(), address.getLocality(), address.getCountryName());
-                                        locationItem.setAddress(s);
+                                        locationItem.setAddress(address.getAddressLine(0));
                                         set_address.setText(locationItem.getAddress());
+                                        LatLng latLng = new LatLng(locationItem.getLatitude(),locationItem.getLongitude());
+                                        marker = googleMap.addMarker(new MarkerOptions().position(latLng).title("여기"));
+                                        googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+                                        googleMap.moveCamera(CameraUpdateFactory.zoomTo(18));
                                     }
                                 } catch (IOException e) {
                                     Log.e(TAG,e.toString());
@@ -92,9 +111,29 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                     });
         } else {
             // Do not have permissions, request them now
-            EasyPermissions.requestPermissions(this,
-                    "This app needs access to your location to know where you are.",
-                    RC_LOCATION, perms);
+            EasyPermissions.requestPermissions(this, "This app needs access to your location to know where you are.", RC_LOCATION, perms);
+        }
+    }
+
+    private void searchLocation(String address){
+        Geocoder geocoder = new Geocoder(this, Locale.KOREA);
+        try {
+            List<Address> addresses = geocoder.getFromLocationName(address,1);
+            if(addresses.size()>0){
+                Address best = addresses.get(0);
+                String add = best.getAddressLine(0);
+                locationItem.setAddress(add);
+                locationItem.setLatitude(best.getLatitude());
+                locationItem.setLongitude(best.getLongitude());
+                set_address.setText(add);
+                LatLng latLng = new LatLng(locationItem.getLatitude(),locationItem.getLongitude());
+                marker.remove();
+                marker = googleMap.addMarker(new MarkerOptions().position(latLng).title("여기"));
+                googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+                googleMap.moveCamera(CameraUpdateFactory.zoomTo(18));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -103,36 +142,106 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         set_address = (EditText)findViewById(R.id.setting_address);
         set_wifi = (Button)findViewById(R.id.setting_wifi);
         set_blue = (Button)findViewById(R.id.setting_blue);
-        set_loca = (Button)findViewById(R.id.setting_loca);
-        set_nfc = (Button)findViewById(R.id.setting_nfc);
-        set_data = (Button)findViewById(R.id.setting_data);
+        set_bright = (Button)findViewById(R.id.setting_bright);
         set_sound = (Button)findViewById(R.id.setting_sound);
         set_search = (Button)findViewById(R.id.setting_search);
         set_cancle = (Button)findViewById(R.id.setting_cancle);
         set_save = (Button)findViewById(R.id.setting_save);
-        set_seekbar = (SeekBar)findViewById(R.id.setting_seekbar);
+        sound_seekbar = (SeekBar)findViewById(R.id.sound_seekbar);
+        bright_seekbar = (SeekBar)findViewById(R.id.bright_seekbar);
+        soundLayout = (LinearLayout)findViewById(R.id.sound_layout);
+        brightLayout = (LinearLayout)findViewById(R.id.bright_layout);
+
+        mapFragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.setting_map);
+        mapFragment.getMapAsync(this);
 
         set_wifi.setOnClickListener(this);
         set_blue.setOnClickListener(this);
-        set_loca.setOnClickListener(this);
-        set_nfc.setOnClickListener(this);
-        set_data.setOnClickListener(this);
+        set_bright.setOnClickListener(this);
         set_sound.setOnClickListener(this);
         set_search.setOnClickListener(this);
         set_cancle.setOnClickListener(this);
         set_save.setOnClickListener(this);
+        sound_seekbar.setOnSeekBarChangeListener(this);
+        bright_seekbar.setOnSeekBarChangeListener(this);
     }
 
     @Override
     public void onClick(View v) {
         switch(v.getId()){
             case R.id.setting_wifi:
+                locationItem.changeWifi();
+                set_wifi.setText("wifi"+Integer.toString(locationItem.getWifi()));
+                break;
             case R.id.setting_blue:
-            case R.id.setting_loca:
-            case R.id.setting_nfc:
-            case R.id.setting_data:
+                locationItem.changeBluetooth();
+                set_blue.setText("bluetooth"+Integer.toString(locationItem.getBluetooth()));
+                break;
             case R.id.setting_sound:
-
+                if(locationItem.getSound()==0||locationItem.getSound()==1){
+                    locationItem.changeSound();
+                }
+                else if(locationItem.getSound()==2) {
+                    locationItem.changeSound();
+                    soundLayout.setVisibility(LinearLayout.VISIBLE);
+                }
+                else{
+                    soundLayout.setVisibility(LinearLayout.GONE);
+                    locationItem.changeSound();
+                }
+                set_sound.setText("sound"+Integer.toString(locationItem.getSound()));
+                break;
+            case R.id.setting_bright:
+                if(locationItem.getBright()==0) {
+                    locationItem.changeBright();
+                    brightLayout.setVisibility(LinearLayout.VISIBLE);
+                }
+                else {
+                    locationItem.changeBright();
+                    brightLayout.setVisibility(LinearLayout.GONE);
+                }
+                set_bright.setText("bright"+Integer.toString(locationItem.getBright()));
+                break;
+            case R.id.setting_cancle:
+                locationItem = (LocationItem) fileManager.getItems().get(2);
+                sound_seekbar.setProgress(locationItem.getVolume());
+                bright_seekbar.setProgress(locationItem.getBrightness());
+                //finish();
+                break;
+            case R.id.setting_save:
+                locationItem.setTitle(set_title.getText().toString());
+                fileManager.addItem(locationItem);
+                fileManager.saveFile();
+                break;
+            case R.id.setting_search:
+                searchLocation(set_address.getText().toString());
+                break;
         }
+    }
+
+    GoogleMap googleMap;
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        this.googleMap = googleMap;
+    }
+
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        if(seekBar.equals(sound_seekbar)){
+            locationItem.setVolume(progress);
+        }else{
+            locationItem.setBrightness(progress);
+        }
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+
     }
 }

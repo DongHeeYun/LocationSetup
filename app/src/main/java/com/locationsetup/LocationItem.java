@@ -6,6 +6,7 @@ import android.location.Geocoder;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Locale;
 
@@ -13,10 +14,10 @@ import java.util.Locale;
  * Created by inter on 2017-11-01.
  */
 
-public class LocationItem {
+public class LocationItem implements Serializable{
 
     //위치를 위한 변수
-    private String locationName;
+    private String title="";
     private String address;
     private double latitude;
     private double longitude;
@@ -24,25 +25,27 @@ public class LocationItem {
     //설정을 위한 변수
     private int wifi;       //0=default 1=on 2=off
     private int bluetooth;  //0=default 1=on 2=off
-    private int location;   //0=default 1=on 2=off
+    //private int location;   //0=default 1=on 2=off
     private int sound;      //0=default 1=off 2=진동 3=on
     private int volume;     //0~100
-    private int nfc;        //0=default 1=on 2=off
-    private int data;       //0=default 1=on 2=off
+    //private int nfc;        //0=default 1=on 2=off
+    //private int data;       //0=default 1=on 2=off
+    private int bright;     //0=default 1=on
+    private int brightness; //0~100
 
     static Geocoder geocoder;
 
 
 
-    public LocationItem(String locationName, String address){
-        this.locationName=locationName;
+    public LocationItem(String title, String address){
+        this.title=title;
         this.address = address;
         findAddress(address);
     }
 
-    public LocationItem(String locationName, double latitude, double longitude){
-        this.locationName = locationName;
-        this.address = locationName;
+    public LocationItem(String title, double latitude, double longitude){
+        this.title = title;
+        this.address = title;
         this.latitude = latitude;
         this.longitude = longitude;
     }
@@ -76,21 +79,21 @@ public class LocationItem {
         else
             bluetooth=0;
     }
-
+/*
     public void changeLocation(){
         if(location<2)
             location++;
         else
             location=0;
     }
-
+*/
     public void changeSound(){
         if(sound<3)
             sound++;
         else
             sound=0;
     }
-
+/*
     public void changeNfc(){
         if(nfc<2)
             nfc++;
@@ -104,15 +107,31 @@ public class LocationItem {
         else
             data=0;
     }
-
-    public String getLocationName() {
-        return locationName;
+*/
+    public void changeBright(){
+        if(bright<1)
+            bright++;
+        else
+            bright=0;
     }
 
+    public void setBrightness(int brightness){
+        this.brightness = brightness;
+    }
+
+    public String getTitle(){
+        return title;
+    }
+
+    public void setTitle(String title){
+        this.title = title;
+    }
+
+/*
     public void setLocationName(String locationName) {
         this.locationName = locationName;
     }
-
+*/
     public String getAddress() {
         return address;
     }
@@ -144,11 +163,11 @@ public class LocationItem {
     public int getBluetooth() {
         return bluetooth;
     }
-
+/*
     public int getLocation() {
         return location;
     }
-
+*/
     public int getSound() {
         return sound;
     }
@@ -160,7 +179,7 @@ public class LocationItem {
     public int getVolume() {
         return volume;
     }
-
+/*
     public int getNfc() {
         return nfc;
     }
@@ -168,7 +187,19 @@ public class LocationItem {
     public int getData() {
         return data;
     }
+*/
+    public int getBright(){
+        return bright;
+    }
 
+    public int getBrightness(){
+        return brightness;
+    }
 
-
+    @Override
+    public String toString(){
+        String returnValue;
+        returnValue = "제목: "+title+" wifi: "+Integer.toString(wifi)+" bluetooth: "+Integer.toString(bluetooth)+" sound: "+Integer.toString(sound)+" volume: "+Integer.toString(volume)+" bright: "+Integer.toString(bright)+" brightness: "+Integer.toString(brightness);
+        return returnValue;
+    }
 }
