@@ -3,7 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/LocationSetup.iml" filepath="$PROJECT_DIR$/LocationSetup.iml" />
+      <module fileurl="file://C:\Users\sky\StudioProjects\LocationSetup\LocationSetup.iml" filepath="C:\Users\sky\StudioProjects\LocationSetup\LocationSetup.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://C:\Users\sky\StudioProjects\LocationSetup\app\app.iml" filepath="C:\Users\sky\StudioProjects\LocationSetup\app\app.iml" />
     </modules>
   </component>
 </project>

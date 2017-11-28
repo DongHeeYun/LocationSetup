@@ -1,28 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <group android:checkableBehavior="single">
+    <group
+        android:id="@+id/top"
+        android:checkableBehavior="single">
         <item
-            android:id="@+id/item1"
-            android:checked="true"
-            android:title="item1" />
+            android:id="@+id/save"
+            android:title="Save"
+            android:icon="@drawable/ic_save"/>
         <item
-            android:id="@+id/item2"
-            android:title="item2" />
+            android:id="@+id/load"
+            android:title="Load"
+            android:icon="@drawable/ic_load"/>
         <item
-            android:id="@+id/item3"
-            android:title="item3" />
+            android:id="@+id/sync"
+            android:title="Sync"
+            android:icon="@drawable/ic_sync"
+            app:actionLayout="@layout/widget_switch"/>
     </group>
 
-    <item android:title="Sub Menu">
-        <menu>
-            <item
-                android:id="@+id/item4"
-                android:title="item4" />
-            <item
-                android:id="@+id/item5"
-                android:title="item5" />
-        </menu>
-    </item>
+    <group
+        android:id="@+id/bottom"
+        android:checkableBehavior="none">
+        <item
+            android:id="@+id/sign"
+            android:title="@string/signed_out"
+            android:icon="@drawable/ic_sign_out"/>
+    </group>
 
 </menu>

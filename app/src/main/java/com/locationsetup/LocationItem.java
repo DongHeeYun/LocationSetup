@@ -6,80 +6,70 @@ package com.locationsetup;
 
 public class LocationItem {
 
-    //위치를 위한 변수
-    private String locationName;
+    private String id;
+    private String name;
     private String address;
     private double latitude;
     private double longitude;
 
-    //설정을 위한 변수
-    private int wifi;       //0=default 1=on 2=off
-    private int bluetooth;  //0=default 1=on 2=off
-    private int location;   //0=default 1=on 2=off
-    private int sound;      //0=default 1=off 2=진동 3=on
-    private int volume;     //0~100
-    private int nfc;        //0=default 1=on 2=off
-    private int data;       //0=default 1=on 2=off
+    private int wifi;
+    private int bluetooth;
+    private int sound;
+    private int volume;
+    private int brightness;
 
-    public LocationItem(String locationName, String address){
-        this.locationName=locationName;
-        this.address = address;
+    private boolean enabled = true;
+
+    public LocationItem() {
     }
 
-    public LocationItem(String locationName, double latitude, double longitude){
-        this.locationName = locationName;
+    public LocationItem(String name, String address, double latitude, double longitude, int wifi, int bluetooth, int sound, int volume, int brightness) {
+        this.name = name;
+        this.address = address;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.wifi = wifi;
+        this.bluetooth = bluetooth;
+        this.sound = sound;
+        this.volume = volume;
+        this.brightness = brightness;
     }
 
-    public void changeWifi(){
-        if(wifi<2)
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void changeWifi() {
+        if(wifi < 2)
             wifi++;
         else
-            wifi=0;
+            wifi = 0;
     }
 
-    public void changeBluetooth(){
-        if(bluetooth<2)
+    public void changeBluetooth() {
+        if(bluetooth < 2)
             bluetooth++;
         else
             bluetooth=0;
     }
 
-    public void changeLocation(){
-        if(location<2)
-            location++;
-        else
-            location=0;
-    }
-
-    public void changeSound(){
-        if(sound<3)
+    public void changeSound() {
+        if(sound < 3)
             sound++;
         else
             sound=0;
     }
 
-    public void changeNfc(){
-        if(nfc<2)
-            nfc++;
-        else
-            nfc=0;
+    public String getId() {
+        return id;
     }
 
-    public void changeData(){
-        if(data<2)
-            data++;
-        else
-            data=0;
-    }
-
-    public String getLocationName() {
-        return locationName;
-    }
-
-    public void setLocationName(String locationName) {
-        this.locationName = locationName;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getAddress() {
@@ -114,10 +104,6 @@ public class LocationItem {
         return bluetooth;
     }
 
-    public int getLocation() {
-        return location;
-    }
-
     public int getSound() {
         return sound;
     }
@@ -130,14 +116,19 @@ public class LocationItem {
         return volume;
     }
 
-    public int getNfc() {
-        return nfc;
+    public int getBrightness() {
+        return brightness;
     }
 
-    public int getData() {
-        return data;
+    public void setBrightness(int brightness) {
+        this.brightness = brightness;
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
 
-
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 }
