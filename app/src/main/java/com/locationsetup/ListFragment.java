@@ -1,6 +1,7 @@
 package com.locationsetup;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -19,6 +20,16 @@ import android.widget.Toast;
  */
 public class ListFragment extends Fragment implements ListAdapter.ItemClickListener,
         MainActivity.OnItemChangedListener {
+
+    /*private OnItemUpdateListener mCallback;
+
+    public interface OnItemUpdateListener {
+        void onItemUpdated(int position);
+    }
+
+    public void setItemClickListener(OnItemUpdateListener itemUpdateListener) {
+        mCallback = itemUpdateListener;
+    }*/
 
     private final String TAG = ListFragment.class.getSimpleName();
 
@@ -58,7 +69,12 @@ public class ListFragment extends Fragment implements ListAdapter.ItemClickListe
         (getView().findViewById(R.id.addItem)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(getActivity(), "Add item", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getActivity(), "Add item", Toast.LENGTH_SHORT).show();
+                LocationItem item = new LocationItem("집", "경기도 고양시 일산서구 덕이동 하이파크시티 401동 2305호",
+                        37.696757, 126.748531, 2, 1, 1, 20, 50);
+                Intent intent = new Intent(getActivity(), ApplyActivity.class);
+                intent.putExtra("setting", item);
+                startActivity(intent);
             }
         });
     }
@@ -75,7 +91,7 @@ public class ListFragment extends Fragment implements ListAdapter.ItemClickListe
         LocationItem item = mAdapter.getItem(position);
         // 상세 보기로 이동
         if (v.getId() == R.id.switch_btn) {
-
+            Toast.makeText(getActivity(), "#" + position + " Name: " + item.isEnabled(), Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(getActivity(), "#" + position + " Name: " + item.getName(), Toast.LENGTH_SHORT).show();
         }
@@ -89,12 +105,16 @@ public class ListFragment extends Fragment implements ListAdapter.ItemClickListe
         Toast.makeText(getActivity(), item.getName() + "removed", Toast.LENGTH_SHORT).show();
     }
 
-
+    @Override
+    public void onItemSwitchCheck(int position, boolean isEnable) {
+        MainActivity.items.get(position).setEnabled(isEnable);
+        // realtime database
+        //onItemUpdated(position);
+    }
 
     @Override
     public void onItemChanged() {
         mAdapter.notifyDataSetChanged();
-        Log.d(TAG, "Adapter.notify()");
-
     }
+
 }

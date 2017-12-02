@@ -5,7 +5,9 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.RadioGroup;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,6 +25,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder>  {
     public interface ItemClickListener {
         void onItemClick(int position, View v);
         void onItemLongClick(int position);
+        void onItemSwitchCheck(int position, boolean isEnable);
     }
 
     public void setItemClickListener(ItemClickListener itemClickListener) {
@@ -36,7 +39,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder>  {
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder
-            implements View.OnClickListener, View.OnLongClickListener {
+            implements View.OnClickListener, View.OnLongClickListener, CompoundButton.OnCheckedChangeListener {
 
         private Context context;
 
@@ -60,6 +63,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder>  {
             sound = itemView.findViewById(R.id.volume);
             brightness = itemView.findViewById(R.id.bright);
             switchBtn = itemView.findViewById(R.id.switch_btn);
+            switchBtn.setOnCheckedChangeListener(this);
 
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
@@ -74,6 +78,11 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder>  {
         public boolean onLongClick(View view) {
             itemClickListener.onItemLongClick(getLayoutPosition());
             return true;
+        }
+
+        @Override
+        public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+            itemClickListener.onItemSwitchCheck(getLayoutPosition(), b);
         }
     }
 
@@ -146,6 +155,8 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder>  {
             case 2:
                 types[2] = R.drawable.ic_vol_vib;
                 break;
+            case 3:
+                types[2] = R.drawable.ic_vol_off;
             default:
                 types[2] = R.drawable.ic_vol_none;
         }
@@ -173,4 +184,5 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder>  {
     public LocationItem getItem(int position) {
         return MainActivity.items.get(position);
     }
+
 }

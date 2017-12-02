@@ -2,6 +2,7 @@ package com.locationsetup;
 
 
 import android.content.Context;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -16,7 +17,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.List;
@@ -103,12 +107,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, MainAct
             mapView.onCreate(savedInstanceState);
     }
 
-    /*@Override
+    @Override
     public void onAttach(Context context) {
         super.onAttach(context);
 
         ((MainActivity)context).setItemClickListener(this);
-    }*/
+    }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -118,15 +122,22 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, MainAct
     }
 
     public void updateMap(GoogleMap googleMap) {
-        MarkerOptions markerOptions = new MarkerOptions();
+        googleMap.clear();
+
         double sumLat = 0.0d;
         double sumLng = 0.0d;
         for (LocationItem item : MainActivity.items) {
             LatLng latLng = new LatLng(item.getLatitude(), item.getLongitude());
-            markerOptions.position(latLng);
-            markerOptions.title(item.getName());
-            markerOptions.snippet(item.getAddress());
-            googleMap.addMarker(markerOptions);
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.position(latLng)
+                    .title(item.getName())
+                    .snippet(item.getAddress());
+            if (!item.isEnabled()) {
+                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(
+                        BitmapDescriptorFactory.HUE_VIOLET));
+            }
+            googleMap.addMarker(markerOptions).setTag(item.getId());
+            googleMap.setOnInfoWindowClickListener(mInfoWindowClickListener);
 
             sumLat += item.getLatitude();
             sumLng += item.getLongitude();
@@ -143,5 +154,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, MainAct
         updateMap(mGoogleMap);
         Log.d(TAG, "update map");
     }
+
+    GoogleMap.OnInfoWindowClickListener mInfoWindowClickListener = new GoogleMap.OnInfoWindowClickListener() {
+        @Override
+        public void onInfoWindowClick(Marker marker) {
+            String id = (String) marker.getTag();
+            for (LocationItem item : MainActivity.items) {
+                if (id.equals(item.getId())) {
+                    // MainActivity.modify(item);
+                    Log.d(TAG, "call->MainActivity.modify(LocationItem item)");
+                }
+            }
+        }
+    };
+
+    /*public BitmapDescriptor getMarkerIcon(String color) {
+        float[] hsv = new float[3];
+        Color.colorToHSV(Color.parseColor(color), hsv);
+        return BitmapDescriptorFactory.defaultMarker(hsv[0]);
+    }*/
 
 }

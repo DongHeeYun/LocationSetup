@@ -1,10 +1,14 @@
 package com.locationsetup;
 
+import android.os.Parcelable;
+
+import java.io.Serializable;
+
 /**
  * Created by inter on 2017-11-01.
  */
 
-public class LocationItem {
+public class LocationItem implements Serializable {
 
     private String id;
     private String name;

@@ -26,7 +26,14 @@
 
     <string name="sync_on">Sync : On</string>
     <string name="sync_off">Sync : Off</string>
-    <!-- TODO: Remove or change this placeholder text -->
+
+    <string name="request_comment">설정으로 변경하시겠습니까?</string>
+    <string name="confirm">확인</string>
+    <string name="cancel">취소</string>
+
+    <string name="permission_denied_settings">설정 변경 권한이 필요합니다.</string>
+    <string name="permission_denied_notify">알림 설정 접근 권한이 필요합니다.</string>
+
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="google_maps_key">AIzaSyB8s_dGUVBh8mBddI9y5WUOCviHEpj2WUk</string>
 </resources>
