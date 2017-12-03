@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int REQ_START_MAIN = 7001;
     public static final int CODE_WRITE_SETTINGS_PERMISSION = 8001;
     public static boolean isSynchronized;
+    public static Context context;
 
     private DrawerLayout mDrawerLayout;
     private NavigationView navigationView;
@@ -91,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        context = this;
 
         notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         if (notificationManager.isNotificationPolicyAccessGranted()) {
@@ -194,6 +196,8 @@ public class MainActivity extends AppCompatActivity {
                 mDrawerLayout.openDrawer(GravityCompat.START);
                 return true;
             case R.id.action_settings:
+                Intent intent = new Intent(this, SettingActivity.class);
+                startActivity(intent);
                 return true;
         }
 

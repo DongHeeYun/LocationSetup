@@ -38,6 +38,10 @@
         <activity
             android:name=".ApplyActivity"
             android:theme="@android:style/Theme.Dialog"/>
+        <activity android:name=".SettingActivity"
+            android:label="설정"/>
+        <activity android:name=".LocationSettingActivity"
+            android:label="위치 설정"/>
 
     </application>
 

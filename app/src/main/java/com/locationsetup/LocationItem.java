@@ -39,6 +39,18 @@ public class LocationItem implements Serializable {
         this.brightness = brightness;
     }
 
+    public LocationItem(String name, String address, double latitude, double longitude){
+        this.name = name;
+        this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        wifi = 0;
+        bluetooth = 0;
+        sound = 0;
+        volume = 0;
+        brightness = -1;
+    }
+
     public String getName() {
         return name;
     }
