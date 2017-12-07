@@ -206,8 +206,7 @@ public class LoginActivity extends Activity implements
     }
 
     private void gobackToMain() {
-        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-        setResult(MainActivity.REQ_START_MAIN, intent);
+        setResult(RESULT_OK);
         finish();
     }
 

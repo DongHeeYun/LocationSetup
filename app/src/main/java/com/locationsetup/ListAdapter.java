@@ -18,7 +18,7 @@ import java.util.List;
  * Created by sky on 2017-11-07.
  */
 
-public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder>  {
+public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
 
     private static ItemClickListener itemClickListener;
 
@@ -99,7 +99,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder>  {
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        LocationItem item = MainActivity.items.get(position);
+        LocationItem item = FileManager.items.get(position);
         holder.name.setText(item.getName());
         holder.address.setText(item.getAddress());
 
@@ -109,7 +109,6 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder>  {
         holder.bluetooth.setImageResource(types[1]);
         holder.sound.setImageResource(types[2]);
         holder.brightness.setImageResource(types[3]);
-
         holder.switchBtn.setChecked(item.isEnabled());
     }
 
@@ -173,16 +172,16 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder>  {
 
     @Override
     public int getItemCount() {
-        return MainActivity.items.size();
+        return FileManager.items.size();
     }
 
-    public void removeItem(int position) {
-        MainActivity.items.remove(position);
+    /*public void removeItem(int position) {
+        FileManager.items.remove(position);
         notifyItemRemoved(position);
-    }
+    }*/
 
     public LocationItem getItem(int position) {
-        return MainActivity.items.get(position);
+        return FileManager.items.get(position);
     }
 
 }

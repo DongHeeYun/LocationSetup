@@ -140,7 +140,9 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                     locationItem.setLongitude(best.getLongitude());
                     set_address.setText(add);
                     LatLng latLng = new LatLng(locationItem.getLatitude(), locationItem.getLongitude());
-                    marker.remove();
+                    if (marker != null){
+                        marker.remove();
+                    }
                     marker = googleMap.addMarker(new MarkerOptions().position(latLng).title("여기"));
                     googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
                     googleMap.moveCamera(CameraUpdateFactory.zoomTo(18));
@@ -254,12 +256,15 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                 bright_seekbar.setProgress(locationItem.getBrightness());
                 set_address.setText(locationItem.getAddress());
                 set_title.setText(locationItem.getName());
-                //finish();
+                setResult(RESULT_CANCELED);
+                finish();
                 break;
             case R.id.setting_save:
                 locationItem.setName(set_title.getText().toString());
                 fileManager.addItem(locationItem);
                 fileManager.saveFile();
+                setResult(RESULT_OK);
+                finish();
                 break;
             case R.id.setting_search:
                 searchLocation(set_address.getText().toString());

@@ -19,21 +19,19 @@ import android.widget.Toast;
  * A simple {@link Fragment} subclass.
  */
 public class ListFragment extends Fragment implements ListAdapter.ItemClickListener,
-        MainActivity.OnItemChangedListener {
+        FirebaseManager.OnItemChangedListener, View.OnClickListener {
 
-    /*private OnItemUpdateListener mCallback;
+    private OnAddButtonClickListener mCallback;
 
-    public interface OnItemUpdateListener {
-        void onItemUpdated(int position);
+    public interface OnAddButtonClickListener {
+        void onAddButtonClicked();
     }
-
-    public void setItemClickListener(OnItemUpdateListener itemUpdateListener) {
-        mCallback = itemUpdateListener;
-    }*/
 
     private final String TAG = ListFragment.class.getSimpleName();
 
     ListAdapter mAdapter;
+
+    FirebaseManager firebaseManager;
 
     public ListFragment() {
         // Required empty public constructor
@@ -55,6 +53,9 @@ public class ListFragment extends Fragment implements ListAdapter.ItemClickListe
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        firebaseManager = FirebaseManager.getInstance();
+        firebaseManager.setItemChangedListener(this);
+
         RecyclerView recyclerView = getView().findViewById(R.id.listView);
         recyclerView.setHasFixedSize(true);
 
@@ -66,24 +67,14 @@ public class ListFragment extends Fragment implements ListAdapter.ItemClickListe
                 new DividerItemDecoration(getActivity(), new LinearLayoutManager(getActivity()).getOrientation());
         recyclerView.addItemDecoration(dividerItemDecoration);
 
-        (getView().findViewById(R.id.addItem)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //Toast.makeText(getActivity(), "Add item", Toast.LENGTH_SHORT).show();
-                LocationItem item = new LocationItem("집", "경기도 고양시 일산서구 덕이동 하이파크시티 401동 2305호",
-                        37.696757, 126.748531, 2, 1, 1, 20, 50);
-                Intent intent = new Intent(getActivity(), ApplyActivity.class);
-                intent.putExtra("setting", item);
-                startActivity(intent);
-            }
-        });
+        getView().findViewById(R.id.addItem).setOnClickListener(this);
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        ((MainActivity)context).setItemClickListener(this);
+        mCallback = (MainActivity) context;
     }
 
     @Override
@@ -101,14 +92,17 @@ public class ListFragment extends Fragment implements ListAdapter.ItemClickListe
     public void onItemLongClick(int position) {
         LocationItem item = mAdapter.getItem(position);
         // 삭제 확인 다이얼로그
-        mAdapter.removeItem(position);
-        Toast.makeText(getActivity(), item.getName() + "removed", Toast.LENGTH_SHORT).show();
+        //mAdapter.removeItem(position);
+        FileManager.items.remove(position);
+        Log.d(TAG, "item removed:" + item.getName());
+        firebaseManager.notifyItemChange();
+        //Toast.makeText(getActivity(), item.getName() + "removed", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onItemSwitchCheck(int position, boolean isEnable) {
-        MainActivity.items.get(position).setEnabled(isEnable);
-        // realtime database
+        FileManager.items.get(position).setEnabled(isEnable);
+        //realtime database
         //onItemUpdated(position);
     }
 
@@ -116,5 +110,18 @@ public class ListFragment extends Fragment implements ListAdapter.ItemClickListe
     public void onItemChanged() {
         mAdapter.notifyDataSetChanged();
     }
+
+    @Override
+    public void onClick(View view) {
+        if (view.getId() == R.id.addItem) {
+            mCallback.onAddButtonClicked();
+        }
+    }
+
+    /*LocationItem item = new LocationItem("집", "경기도 고양시 일산서구 덕이동 하이파크시티 401동 2305호",
+                        37.696757, 126.748531, 2, 1, 1, 20, 50);
+                Intent intent = new Intent(getActivity(), ApplyActivity.class);
+                intent.putExtra("setting", item);
+                startActivity(intent);*/
 
 }

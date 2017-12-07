@@ -48,23 +48,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
-
-    private List<OnItemChangedListener> mCallback
-            = new ArrayList<>();
-
-    public interface OnItemChangedListener {
-        void onItemChanged();
-    }
-
-    public void setItemClickListener(OnItemChangedListener itemChangedListener) {
-        mCallback.add(itemChangedListener);
-    }
-
-    private void notifyItemChange() {
-        for (OnItemChangedListener listener : mCallback)
-            listener.onItemChanged();
-    }
+public class MainActivity extends AppCompatActivity implements ListFragment.OnAddButtonClickListener,
+        MapFragment.OnAddButtonClickListener {
 
     private final String TAG = MainActivity.class.getSimpleName();
     private final String PREF_NAME = "options";
@@ -74,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     public final int ON_DO_NOT_DISTURB_CALLBACK_CODE = 6001;
     public static final int REQ_START_MAIN = 7001;
     public static final int CODE_WRITE_SETTINGS_PERMISSION = 8001;
+    public static final int REQUEST_ADD_ITEM = 9001;
     public static boolean isSynchronized;
     public static Context context;
 
@@ -81,12 +67,15 @@ public class MainActivity extends AppCompatActivity {
     private NavigationView navigationView;
     private Switch switchBtn;
 
-    private FirebaseAuth mAuth;
-    private FirebaseDatabase mDatabase;
+    //private FirebaseAuth mAuth;
+    //private FirebaseDatabase mDatabase;
+
+    FirebaseManager mFirebaseManager;
+    FileManager mFileManager;
 
     NotificationManager notificationManager;
 
-    public static List<LocationItem> items;
+    //public static List<LocationItem> items;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +90,13 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
             startActivityForResult(intent, ON_DO_NOT_DISTURB_CALLBACK_CODE);
         }
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
 
     }
 
@@ -126,24 +122,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void initialize() {
-        mAuth = FirebaseAuth.getInstance();
-        mDatabase = FirebaseDatabase.getInstance();
+        //mAuth = FirebaseAuth.getInstance();
+        //mDatabase = FirebaseDatabase.getInstance();
 
-        items = new ArrayList<>();
+        //items = new ArrayList<>();'
 
-        /*items.add(new LocationItem("학교", "서울시 성북구 한성대학교", 37.582048, 127.010380,
-                0, 1, 1, 20, 50));
-        items.add(new LocationItem("집", "서울시 성북구 삼선교로 14길", 37.587647, 127.009840,
-                1, 0, 2, 30, 30));*/
+        mFirebaseManager = FirebaseManager.getInstance();
+        mFileManager = FileManager.getFileManager();
 
         SharedPreferences pref = getSharedPreferences(PREF_NAME, Activity.MODE_PRIVATE);
         isSynchronized = pref.getBoolean(PREF_SYNC, true);
         Log.d(TAG, "sync:" + isSynchronized);
 
         if (isSynchronized) {
-            loadItems();
+            FirebaseUser user = mFirebaseManager.getUser();
+            if (user == null) {
+                isSynchronized = false;
+                Toast.makeText(MainActivity.this, R.string.request_auth, Toast.LENGTH_SHORT).show();
+            } else {
+                mFirebaseManager.loadItems(user);
+            }
         } else {
-            // 내부 저장소 불러오기
+            FileManager.getFileManager();
+            mFirebaseManager.notifyItemChange();
         }
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -196,8 +197,6 @@ public class MainActivity extends AppCompatActivity {
                 mDrawerLayout.openDrawer(GravityCompat.START);
                 return true;
             case R.id.action_settings:
-                Intent intent = new Intent(this, SettingActivity.class);
-                startActivity(intent);
                 return true;
         }
 
@@ -240,21 +239,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void authProcess() {
+    /*private void authProcess() {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
-            mAuth.signOut();
+            firebaseManager.signOut();
             updateUI();
         } else {
             Intent intent = new Intent(this, LoginActivity.class);
             startActivityForResult(intent, REQ_START_MAIN);
         }
-    }
+    }*/
 
     public void updateUI() {
         View headerView = navigationView.getHeaderView(0);
 
-        FirebaseUser user = mAuth.getCurrentUser();
+        FirebaseUser user = mFirebaseManager.getUser();
         if (user != null) {
             TextView t_name = headerView.findViewById(R.id.display_name);
             TextView t_email = headerView.findViewById(R.id.email_addr);
@@ -274,8 +273,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void saveCurrentItems() {
-        FirebaseUser user = mAuth.getCurrentUser();
+    /*public void saveCurrentItems() {
+        FirebaseUser user = firebaseManager.getUser();
         if (user == null) {
             Toast.makeText(this, R.string.request_auth, Toast.LENGTH_SHORT).show();
             return;
@@ -283,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
         String userId = user.getUid();
         final Map<String, Object> childUpdates = new HashMap<>();
         DatabaseReference ref = mDatabase.getReference(userId + "/items");
-        for (LocationItem item : items) {
+        for (LocationItem item : FileManager.items) {
             String id = ref.push().getKey();
             item.setId(id);
             childUpdates.put(id, item);
@@ -301,9 +300,9 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-    }
+    }*/
 
-    public void loadItems() {
+    /*public void loadItems() {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) {
             Toast.makeText(this, R.string.request_auth, Toast.LENGTH_SHORT).show();
@@ -311,9 +310,9 @@ public class MainActivity extends AppCompatActivity {
         }
         mDatabase.getReference(user.getUid() + "/items")
                 .addListenerForSingleValueEvent(postListener);
-    }
+    }*/
 
-    public void onItemUpdated(int position) {
+    /*public void onItemUpdated(int position) {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) {
             Toast.makeText(this, R.string.request_auth, Toast.LENGTH_SHORT).show();
@@ -322,33 +321,42 @@ public class MainActivity extends AppCompatActivity {
         String userId = user.getUid();
         final Map<String, Object> childUpdates = new HashMap<>();
         DatabaseReference ref = mDatabase.getReference(userId + "/items");
-        for (LocationItem item : items) {
+        for (LocationItem item : FileManager.items) {
             String id = ref.push().getKey();
             item.setId(id);
             childUpdates.put(id, item);
         }
-    }
+    }*/
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == REQ_START_MAIN) {
-            updateUI();
-            return;
-        }
-        if (requestCode == ON_DO_NOT_DISTURB_CALLBACK_CODE) {
-            if (!notificationManager.isNotificationPolicyAccessGranted()) {
-                Toast.makeText(MainActivity.this, R.string.permission_denied_notify, Toast.LENGTH_SHORT).show();
-                finish();
-            } else {
-                requestWriteSettingsPermission(this);
-            }
-        } else if (requestCode == CODE_WRITE_SETTINGS_PERMISSION) {
-            if (Settings.System.canWrite(this)) {
-                initialize();
-            } else {
-                Toast.makeText(MainActivity.this, R.string.permission_denied_settings, Toast.LENGTH_SHORT).show();
-                finish();
-            }
+        switch (requestCode) {
+            case REQ_START_MAIN:
+                if (resultCode == RESULT_OK) {
+                    updateUI();
+                }
+                break;
+            case ON_DO_NOT_DISTURB_CALLBACK_CODE:
+                if (!notificationManager.isNotificationPolicyAccessGranted()) {
+                    Toast.makeText(MainActivity.this, R.string.permission_denied_notify, Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    requestWriteSettingsPermission(this);
+                }
+                break;
+            case CODE_WRITE_SETTINGS_PERMISSION:
+                if (Settings.System.canWrite(this)) {
+                    initialize();
+                } else {
+                    Toast.makeText(MainActivity.this, R.string.permission_denied_settings, Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+                break;
+            case REQUEST_ADD_ITEM:
+                if (resultCode == RESULT_OK) {
+                    mFirebaseManager.notifyItemChange();
+                }
+                break;
         }
     }
 
@@ -366,25 +374,47 @@ public class MainActivity extends AppCompatActivity {
             mDrawerLayout.closeDrawers();
 
             int id = menuItem.getItemId();
+            FirebaseUser user = mFirebaseManager.getUser();
             switch (id) {
                 case R.id.save:
-                    saveCurrentItems();
+                    if (user == null) {
+                        Toast.makeText(MainActivity.this, R.string.request_auth, Toast.LENGTH_SHORT).show();
+                        break;
+                    }
+                    mFirebaseManager.saveCurrentItems(user);
                     break;
                 case R.id.load:
-                    loadItems();
+                    if (user == null) {
+                        Toast.makeText(MainActivity.this, R.string.request_auth, Toast.LENGTH_SHORT).show();
+                        break;
+                    }
+                    mFirebaseManager.loadItems(user);
                     break;
                 case R.id.sync:
+                    if (user == null) {
+                        isSynchronized = false;
+                        switchBtn.setChecked(isSynchronized);
+                        Toast.makeText(MainActivity.this, R.string.request_auth, Toast.LENGTH_SHORT).show();
+                        break;
+                    }
                     if (isSynchronized) {
                         switchBtn.setChecked(false);
                         isSynchronized = false;
                     } else {
                         switchBtn.setChecked(true);
                         isSynchronized = true;
-                        loadItems();
+                        mFirebaseManager.saveCurrentItems(user);
                     }
                     break;
                 case R.id.sign:
-                    authProcess();
+                    if (mFirebaseManager.authProcess()) {
+                        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivityForResult(intent, REQ_START_MAIN);
+                    } else {
+                        isSynchronized = false;
+                        switchBtn.setChecked(isSynchronized);
+                        updateUI();
+                    }
                     break;
             }
             return true;
@@ -403,7 +433,17 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    ValueEventListener postListener = new ValueEventListener() {
+    @Override
+    public void onAddButtonClicked() {
+        startAddItem();
+    }
+
+    public void startAddItem() {
+        Intent intent =  new Intent(this, SettingActivity.class);
+        startActivityForResult(intent, REQUEST_ADD_ITEM);
+    }
+
+    /*ValueEventListener postListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             items.clear();
@@ -418,6 +458,6 @@ public class MainActivity extends AppCompatActivity {
         public void onCancelled(DatabaseError databaseError) {
             Log.w(TAG, "loadPost:onCancelled", databaseError.toException());
         }
-    };
+    };*/
 
 }

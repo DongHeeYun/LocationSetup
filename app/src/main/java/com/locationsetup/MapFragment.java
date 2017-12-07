@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -29,12 +30,23 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class MapFragment extends Fragment implements OnMapReadyCallback, MainActivity.OnItemChangedListener {
+public class MapFragment extends Fragment implements OnMapReadyCallback,
+        FirebaseManager.OnItemChangedListener, View.OnClickListener {
+
+    private OnAddButtonClickListener mCallback;
+
+    public interface OnAddButtonClickListener {
+        void onAddButtonClicked();
+    }
 
     private final String TAG = MapFragment.class.getSimpleName();
 
     private MapView mapView;
     private GoogleMap mGoogleMap;
+    FirebaseManager firebaseManager;
+
+    double avgLat = 37.582125;
+    double avgLnt = 127.010412;
 
     public MapFragment() {
         // Required empty public constructor
@@ -51,8 +63,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, MainAct
         // Inflate the layout for this fragment
         View layout = inflater.inflate(R.layout.fragment_map, container, false);
 
+        firebaseManager = FirebaseManager.getInstance();
+        firebaseManager.setItemChangedListener(this);
+
         mapView = layout.findViewById(R.id.map);
         mapView.getMapAsync(this);
+
+        getActivity().findViewById(R.id.addItem).setOnClickListener(this);
 
         return layout;
     }
@@ -111,7 +128,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, MainAct
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        ((MainActivity)context).setItemClickListener(this);
+        mCallback = (MainActivity) context;
     }
 
     @Override
@@ -126,25 +143,29 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, MainAct
 
         double sumLat = 0.0d;
         double sumLng = 0.0d;
-        for (LocationItem item : MainActivity.items) {
-            LatLng latLng = new LatLng(item.getLatitude(), item.getLongitude());
-            MarkerOptions markerOptions = new MarkerOptions();
-            markerOptions.position(latLng)
-                    .title(item.getName())
-                    .snippet(item.getAddress());
-            if (!item.isEnabled()) {
-                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(
-                        BitmapDescriptorFactory.HUE_VIOLET));
-            }
-            googleMap.addMarker(markerOptions).setTag(item.getId());
-            googleMap.setOnInfoWindowClickListener(mInfoWindowClickListener);
 
-            sumLat += item.getLatitude();
-            sumLng += item.getLongitude();
+        if (FileManager.items.size() != 0) {
+            for (LocationItem item : FileManager.items) {
+                LatLng latLng = new LatLng(item.getLatitude(), item.getLongitude());
+                MarkerOptions markerOptions = new MarkerOptions();
+                markerOptions.position(latLng)
+                        .title(item.getName())
+                        .snippet(item.getAddress());
+                if (!item.isEnabled()) {
+                    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(
+                            BitmapDescriptorFactory.HUE_VIOLET));
+                }
+                googleMap.addMarker(markerOptions).setTag(item.getId());
+                googleMap.setOnInfoWindowClickListener(mInfoWindowClickListener);
+
+                sumLat += item.getLatitude();
+                sumLng += item.getLongitude();
+            }
+
+            avgLat = sumLat / FileManager.items.size();
+            avgLnt = sumLng / FileManager.items.size();
         }
 
-        double avgLat = sumLat / MainActivity.items.size();
-        double avgLnt = sumLng / MainActivity.items.size();
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(avgLat, avgLnt)));
         googleMap.animateCamera(CameraUpdateFactory.zoomTo(13));
     }
@@ -155,14 +176,22 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, MainAct
         Log.d(TAG, "update map");
     }
 
+    @Override
+    public void onClick(View view) {
+        if (view.getId() == R.id.addItem) {
+            Log.d(TAG, "map add button clicked");
+            mCallback.onAddButtonClicked();
+        }
+    }
+
     GoogleMap.OnInfoWindowClickListener mInfoWindowClickListener = new GoogleMap.OnInfoWindowClickListener() {
         @Override
         public void onInfoWindowClick(Marker marker) {
             String id = (String) marker.getTag();
-            for (LocationItem item : MainActivity.items) {
+            for (LocationItem item : FileManager.items) {
                 if (id.equals(item.getId())) {
-                    // MainActivity.modify(item);
-                    Log.d(TAG, "call->MainActivity.modify(LocationItem item)");
+                    // FileManager.modify(item);
+                    Log.d(TAG, "call->FileManager.modify(LocationItem item)");
                 }
             }
         }
