@@ -24,7 +24,7 @@ public class ListFragment extends Fragment implements ListAdapter.ItemClickListe
     private OnAddButtonClickListener mCallback;
 
     public interface OnAddButtonClickListener {
-        void onAddButtonClicked();
+        void onAddButtonClicked(int type, int position);
     }
 
     private final String TAG = ListFragment.class.getSimpleName();
@@ -84,7 +84,7 @@ public class ListFragment extends Fragment implements ListAdapter.ItemClickListe
         if (v.getId() == R.id.switch_btn) {
             Toast.makeText(getActivity(), "#" + position + " Name: " + item.isEnabled(), Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(getActivity(), "#" + position + " Name: " + item.getName(), Toast.LENGTH_SHORT).show();
+            mCallback.onAddButtonClicked(1, position);
         }
     }
 
@@ -94,6 +94,7 @@ public class ListFragment extends Fragment implements ListAdapter.ItemClickListe
         // 삭제 확인 다이얼로그
         //mAdapter.removeItem(position);
         FileManager.items.remove(position);
+
         Log.d(TAG, "item removed:" + item.getName());
         firebaseManager.notifyItemChange();
         //Toast.makeText(getActivity(), item.getName() + "removed", Toast.LENGTH_SHORT).show();
@@ -102,6 +103,7 @@ public class ListFragment extends Fragment implements ListAdapter.ItemClickListe
     @Override
     public void onItemSwitchCheck(int position, boolean isEnable) {
         FileManager.items.get(position).setEnabled(isEnable);
+        firebaseManager.notifyItemChange();
         //realtime database
         //onItemUpdated(position);
     }
@@ -114,7 +116,7 @@ public class ListFragment extends Fragment implements ListAdapter.ItemClickListe
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.addItem) {
-            mCallback.onAddButtonClicked();
+            mCallback.onAddButtonClicked(0, -1);
         }
     }
 

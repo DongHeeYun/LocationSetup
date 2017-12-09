@@ -39,7 +39,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder
-            implements View.OnClickListener, View.OnLongClickListener, CompoundButton.OnCheckedChangeListener {
+            implements View.OnClickListener, View.OnLongClickListener {
 
         private Context context;
 
@@ -63,7 +63,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
             sound = itemView.findViewById(R.id.volume);
             brightness = itemView.findViewById(R.id.bright);
             switchBtn = itemView.findViewById(R.id.switch_btn);
-            switchBtn.setOnCheckedChangeListener(this);
+            switchBtn.setOnClickListener(this);
 
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
@@ -71,18 +71,17 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
 
         @Override
         public void onClick(View view) {
-            itemClickListener.onItemClick(getLayoutPosition(), view);
+            if (view.getId() == R.id.switch_btn) {
+                itemClickListener.onItemSwitchCheck(getLayoutPosition(), switchBtn.isChecked());
+            } else {
+                itemClickListener.onItemClick(getLayoutPosition(), view);
+            }
         }
 
         @Override
         public boolean onLongClick(View view) {
             itemClickListener.onItemLongClick(getLayoutPosition());
             return true;
-        }
-
-        @Override
-        public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-            itemClickListener.onItemSwitchCheck(getLayoutPosition(), b);
         }
     }
 

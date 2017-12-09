@@ -73,11 +73,20 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting);
         context = this;
-        locationItem = new LocationItem(null,null,0,0);
+
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        getLastLocation();
+        fileManager = FileManager.getFileManager(this);
+
+        // LocationItem 수정일 경우
+        Intent intent = getIntent();
+        LocationItem item = (LocationItem) intent.getSerializableExtra("item");
+        if (item != null) {
+            locationItem = item;
+        } else {
+            locationItem = new LocationItem(null,null,0,0);
+            getLastLocation();
+        }
         initView();
-        fileManager = FileManager.getFileManager();
     }
 
     @SuppressWarnings("MissingPermission")
@@ -198,6 +207,22 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         bright_seekbar = (SeekBar)findViewById(R.id.bright_seekbar);
         soundLayout = (LinearLayout)findViewById(R.id.sound_layout);
         brightLayout = (LinearLayout)findViewById(R.id.bright_layout);
+
+        // value initializing
+        set_title.setText(locationItem.getName());
+        set_address.setText(locationItem.getAddress());
+        set_wifi.setText("wifi"+Integer.toString(locationItem.getWifi()));
+        set_blue.setText("bluetooth"+Integer.toString(locationItem.getBluetooth()));
+        if (locationItem.getBrightness() != -1) {
+            brightLayout.setVisibility(LinearLayout.VISIBLE);
+            bright_seekbar.setProgress(locationItem.getBrightness());
+        }
+        set_sound.setText("sound"+Integer.toString(locationItem.getSound()));
+        if (locationItem.getSound() == 2) {
+            locationItem.changeSound();
+            soundLayout.setVisibility(LinearLayout.VISIBLE);
+            sound_seekbar.setProgress(locationItem.getVolume());
+        }
 
         mapFragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.setting_map);
         mapFragment.getMapAsync(this);

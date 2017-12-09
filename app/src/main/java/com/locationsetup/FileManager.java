@@ -1,6 +1,7 @@
 package com.locationsetup;
 
 import android.Manifest;
+import android.content.Context;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,6 +26,8 @@ public class FileManager {
 
     public static ArrayList<LocationItem> items;
 
+    Context mContext;
+
     File file;
 
     FileOutputStream fout;
@@ -32,16 +35,18 @@ public class FileManager {
     ObjectOutputStream oout;
     ObjectInputStream oin;
 
-    public static FileManager getFileManager(){
+    public static FileManager getFileManager(Context context){
         if(fileManager==null){
-            fileManager = new FileManager();
+            fileManager = new FileManager(context);
         }
         return fileManager;
     }
 
-    private FileManager(){
+    private FileManager(Context context){
+        mContext = context;
+        items = new ArrayList<>();
 
-        file = new File(MainActivity.context.getFilesDir(),title);
+        file = new File(mContext.getFilesDir(),title);
         if(!file.exists()) {
             try {
                 file.createNewFile();
@@ -49,7 +54,9 @@ public class FileManager {
                 e.printStackTrace();
             }
         }
+    }
 
+    public void getFile() {
         try{
             fin = new FileInputStream(file);
             oin = new ObjectInputStream(fin);
@@ -67,7 +74,7 @@ public class FileManager {
     }
 
     public void saveFile(){
-
+        file = new File(mContext.getFilesDir(),title);
         try{
             fout = new FileOutputStream(file);
             oout = new ObjectOutputStream(fout);

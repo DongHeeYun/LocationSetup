@@ -33,20 +33,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.MutableData;
-import com.google.firebase.database.Transaction;
-import com.google.firebase.database.ValueEventListener;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements ListFragment.OnAddButtonClickListener,
         MapFragment.OnAddButtonClickListener {
@@ -56,32 +43,26 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
     private final String PREF_SYNC = "synchronization";
     private final int PAGE_NUMBER = 2;
 
-    public final int ON_DO_NOT_DISTURB_CALLBACK_CODE = 6001;
-    public static final int REQ_START_MAIN = 7001;
-    public static final int CODE_WRITE_SETTINGS_PERMISSION = 8001;
-    public static final int REQUEST_ADD_ITEM = 9001;
+    public final int ON_DO_NOT_DISTURB_CALLBACK_CODE = 1001;
+    public static final int REQ_START_MAIN = 2001;
+    public static final int CODE_WRITE_SETTINGS_PERMISSION = 3001;
+    public static final int REQUEST_ADD_ITEM = 4001;
+    public static final int REQUEST_UPDATE_ITEM = 5001;
     public static boolean isSynchronized;
-    public static Context context;
 
     private DrawerLayout mDrawerLayout;
     private NavigationView navigationView;
     private Switch switchBtn;
-
-    //private FirebaseAuth mAuth;
-    //private FirebaseDatabase mDatabase;
 
     FirebaseManager mFirebaseManager;
     FileManager mFileManager;
 
     NotificationManager notificationManager;
 
-    //public static List<LocationItem> items;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        context = this;
 
         notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         if (notificationManager.isNotificationPolicyAccessGranted()) {
@@ -97,7 +78,8 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
     protected void onDestroy() {
         super.onDestroy();
 
-
+        mFileManager.saveFile();
+        Log.i(TAG, "save items in internal storage");
     }
 
     public void requestWriteSettingsPermission(Activity context){
@@ -122,17 +104,12 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
     }
 
     public void initialize() {
-        //mAuth = FirebaseAuth.getInstance();
-        //mDatabase = FirebaseDatabase.getInstance();
-
-        //items = new ArrayList<>();'
-
         mFirebaseManager = FirebaseManager.getInstance();
-        mFileManager = FileManager.getFileManager();
+        mFileManager = FileManager.getFileManager(this);
 
         SharedPreferences pref = getSharedPreferences(PREF_NAME, Activity.MODE_PRIVATE);
         isSynchronized = pref.getBoolean(PREF_SYNC, true);
-        Log.d(TAG, "sync:" + isSynchronized);
+        Log.d(TAG, "synchronized:" + isSynchronized);
 
         if (isSynchronized) {
             FirebaseUser user = mFirebaseManager.getUser();
@@ -143,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
                 mFirebaseManager.loadItems(user);
             }
         } else {
-            FileManager.getFileManager();
+            mFileManager.getFile();
             mFirebaseManager.notifyItemChange();
         }
 
@@ -273,61 +250,6 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
         }
     }
 
-    /*public void saveCurrentItems() {
-        FirebaseUser user = firebaseManager.getUser();
-        if (user == null) {
-            Toast.makeText(this, R.string.request_auth, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String userId = user.getUid();
-        final Map<String, Object> childUpdates = new HashMap<>();
-        DatabaseReference ref = mDatabase.getReference(userId + "/items");
-        for (LocationItem item : FileManager.items) {
-            String id = ref.push().getKey();
-            item.setId(id);
-            childUpdates.put(id, item);
-        }
-        ref.runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-                mutableData.setValue(null);
-                mutableData.setValue(childUpdates);
-                return Transaction.success(mutableData);
-            }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-
-            }
-        });
-    }*/
-
-    /*public void loadItems() {
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user == null) {
-            Toast.makeText(this, R.string.request_auth, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        mDatabase.getReference(user.getUid() + "/items")
-                .addListenerForSingleValueEvent(postListener);
-    }*/
-
-    /*public void onItemUpdated(int position) {
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user == null) {
-            Toast.makeText(this, R.string.request_auth, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String userId = user.getUid();
-        final Map<String, Object> childUpdates = new HashMap<>();
-        DatabaseReference ref = mDatabase.getReference(userId + "/items");
-        for (LocationItem item : FileManager.items) {
-            String id = ref.push().getKey();
-            item.setId(id);
-            childUpdates.put(id, item);
-        }
-    }*/
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
@@ -353,6 +275,11 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
                 }
                 break;
             case REQUEST_ADD_ITEM:
+                if (resultCode == RESULT_OK) {
+                    mFirebaseManager.notifyItemChange();
+                }
+                break;
+            case REQUEST_UPDATE_ITEM:
                 if (resultCode == RESULT_OK) {
                     mFirebaseManager.notifyItemChange();
                 }
@@ -391,20 +318,7 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
                     mFirebaseManager.loadItems(user);
                     break;
                 case R.id.sync:
-                    if (user == null) {
-                        isSynchronized = false;
-                        switchBtn.setChecked(isSynchronized);
-                        Toast.makeText(MainActivity.this, R.string.request_auth, Toast.LENGTH_SHORT).show();
-                        break;
-                    }
-                    if (isSynchronized) {
-                        switchBtn.setChecked(false);
-                        isSynchronized = false;
-                    } else {
-                        switchBtn.setChecked(true);
-                        isSynchronized = true;
-                        mFirebaseManager.saveCurrentItems(user);
-                    }
+                    onSwitchButtonClicked();
                     break;
                 case R.id.sign:
                     if (mFirebaseManager.authProcess()) {
@@ -421,43 +335,46 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
         }
     };
 
+    private void onSwitchButtonClicked() {
+        FirebaseUser user = mFirebaseManager.getUser();
+        if (user == null) {
+            isSynchronized = false;
+            switchBtn.setChecked(isSynchronized);
+            Toast.makeText(MainActivity.this, R.string.request_auth, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (isSynchronized) {
+            switchBtn.setChecked(false);
+            isSynchronized = false;
+        } else {
+            switchBtn.setChecked(true);
+            isSynchronized = true;
+            mFirebaseManager.saveCurrentItems(user);
+        }
+    }
+
     CompoundButton.OnCheckedChangeListener mCheckedChangedListener = new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-            isSynchronized = b;
-            if (b) {
-                Toast.makeText(MainActivity.this, R.string.sync_on, Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(MainActivity.this, R.string.sync_off, Toast.LENGTH_SHORT).show();
-            }
+            onSwitchButtonClicked();
         }
     };
 
     @Override
-    public void onAddButtonClicked() {
-        startAddItem();
+    public void onAddButtonClicked(int type, int position) {
+        startAddItem(type, position);
     }
 
-    public void startAddItem() {
+    public void startAddItem(int type, int position) {
         Intent intent =  new Intent(this, SettingActivity.class);
-        startActivityForResult(intent, REQUEST_ADD_ITEM);
+        int requestCode;
+        if (type == 0) {
+            requestCode = REQUEST_ADD_ITEM;
+        } else {
+            requestCode = REQUEST_UPDATE_ITEM;
+            intent.putExtra("item", FileManager.items.get(position));
+        }
+        startActivityForResult(intent, requestCode);
     }
-
-    /*ValueEventListener postListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(DataSnapshot dataSnapshot) {
-            items.clear();
-            for (DataSnapshot itemSnapshot : dataSnapshot.getChildren()) {
-                LocationItem item = itemSnapshot.getValue(LocationItem.class);
-                items.add(item);
-            }
-            notifyItemChange();
-        }
-
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
-            Log.w(TAG, "loadPost:onCancelled", databaseError.toException());
-        }
-    };*/
 
 }

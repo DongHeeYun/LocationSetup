@@ -36,7 +36,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     private OnAddButtonClickListener mCallback;
 
     public interface OnAddButtonClickListener {
-        void onAddButtonClicked();
+        void onAddButtonClicked(int type, int position);
     }
 
     private final String TAG = MapFragment.class.getSimpleName();
@@ -155,7 +155,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
                     markerOptions.icon(BitmapDescriptorFactory.defaultMarker(
                             BitmapDescriptorFactory.HUE_VIOLET));
                 }
-                googleMap.addMarker(markerOptions).setTag(item.getId());
+
+                Marker marker = googleMap.addMarker(markerOptions);
+                marker.setTag(item.getId());
                 googleMap.setOnInfoWindowClickListener(mInfoWindowClickListener);
 
                 sumLat += item.getLatitude();
@@ -180,7 +182,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     public void onClick(View view) {
         if (view.getId() == R.id.addItem) {
             Log.d(TAG, "map add button clicked");
-            mCallback.onAddButtonClicked();
+            mCallback.onAddButtonClicked(0, -1);
         }
     }
 
@@ -188,10 +190,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         @Override
         public void onInfoWindowClick(Marker marker) {
             String id = (String) marker.getTag();
-            for (LocationItem item : FileManager.items) {
-                if (id.equals(item.getId())) {
-                    // FileManager.modify(item);
-                    Log.d(TAG, "call->FileManager.modify(LocationItem item)");
+            for (int i = 0; i < FileManager.items.size(); i++) {
+                if (id.equals(FileManager.items.get(i).getId())) {
+                    //mCallback.onAddButtonClicked(0, i);
                 }
             }
         }

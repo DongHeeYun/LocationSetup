@@ -103,8 +103,10 @@ public class FirebaseManager {
             @Override
             public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
                 if (databaseError != null) {
-                    Log.w(TAG, "transaction complete:" + databaseError.getMessage());
+                    Log.w(TAG, "transaction failed:" + databaseError.getMessage());
+                    return;
                 }
+                Log.d(TAG, "transaction complete");
             }
         });
     }
