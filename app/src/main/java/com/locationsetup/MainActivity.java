@@ -49,13 +49,16 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
     public static final int REQUEST_ADD_ITEM = 4001;
     public static final int REQUEST_UPDATE_ITEM = 5001;
     public static boolean isSynchronized;
+    private boolean isGeofencing = true;
 
     private DrawerLayout mDrawerLayout;
     private NavigationView navigationView;
-    private Switch switchBtn;
+    private Switch syncBtn;
+    private Switch geofBtn;
 
     FirebaseManager mFirebaseManager;
     FileManager mFileManager;
+    GeofenceManager mGeofenceManager;
 
     NotificationManager notificationManager;
 
@@ -80,6 +83,12 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
 
         mFileManager.saveFile();
         Log.i(TAG, "save items in internal storage");
+
+        SharedPreferences pref = getSharedPreferences(PREF_NAME, Activity.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putBoolean(PREF_SYNC, isSynchronized);
+        editor.commit();
+        Log.i(TAG, "sync:" + isSynchronized);
     }
 
     public void requestWriteSettingsPermission(Activity context){
@@ -106,6 +115,7 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
     public void initialize() {
         mFirebaseManager = FirebaseManager.getInstance();
         mFileManager = FileManager.getFileManager(this);
+        mGeofenceManager = new GeofenceManager(this);
 
         SharedPreferences pref = getSharedPreferences(PREF_NAME, Activity.MODE_PRIVATE);
         isSynchronized = pref.getBoolean(PREF_SYNC, true);
@@ -134,10 +144,27 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
         navigationView = (NavigationView) findViewById(R.id.navigation_view);
         navigationView.setNavigationItemSelectedListener(mNavItemSelectedListener);
 
-        MenuItem switchItem = navigationView.getMenu().findItem(R.id.sync);
-        switchBtn = (Switch) switchItem.getActionView();
-        switchBtn.setOnCheckedChangeListener(mCheckedChangedListener);
-        switchBtn.setChecked(isSynchronized);
+        Menu menu = navigationView.getMenu();
+        MenuItem syncSwitchItem = menu.findItem(R.id.sync);
+        syncBtn = (Switch) syncSwitchItem.getActionView();
+        syncBtn.setChecked(isSynchronized);
+        syncBtn.setOnCheckedChangeListener(mCheckedChangedListener);
+        MenuItem geofSwitchItem = menu.findItem(R.id.geofence);
+        geofBtn = (Switch) geofSwitchItem.getActionView();
+        geofBtn.setChecked(isGeofencing);
+        geofBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                Log.d(TAG, "geofBtn:" + b);
+                if (b) {
+                    isGeofencing = true;
+                    mGeofenceManager.startservice();
+                } else {
+                    isGeofencing = false;
+                    mGeofenceManager.stopservice();
+                }
+            }
+        });
 
         MainPagerAdapter mPagerAdapter = new MainPagerAdapter(getSupportFragmentManager());
         ViewPager mViewPager = (ViewPager) findViewById(R.id.viewPager);
@@ -146,18 +173,6 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
         mTab.setupWithViewPager(mViewPager);
 
         updateUI();
-    }
-
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        SharedPreferences pref = getSharedPreferences(PREF_NAME, Activity.MODE_PRIVATE);
-        SharedPreferences.Editor editor = pref.edit();
-        editor.putBoolean(PREF_SYNC, isSynchronized);
-        editor.commit();
-        Log.d(TAG, "sync:" + isSynchronized);
     }
 
     @Override
@@ -326,7 +341,7 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
                         startActivityForResult(intent, REQ_START_MAIN);
                     } else {
                         isSynchronized = false;
-                        switchBtn.setChecked(isSynchronized);
+                        syncBtn.setChecked(isSynchronized);
                         updateUI();
                     }
                     break;
@@ -339,16 +354,16 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
         FirebaseUser user = mFirebaseManager.getUser();
         if (user == null) {
             isSynchronized = false;
-            switchBtn.setChecked(isSynchronized);
+            syncBtn.setChecked(isSynchronized);
             Toast.makeText(MainActivity.this, R.string.request_auth, Toast.LENGTH_SHORT).show();
             return;
         }
         if (isSynchronized) {
-            switchBtn.setChecked(false);
             isSynchronized = false;
+            syncBtn.setChecked(false);
         } else {
-            switchBtn.setChecked(true);
             isSynchronized = true;
+            syncBtn.setChecked(true);
             mFirebaseManager.saveCurrentItems(user);
         }
     }
@@ -356,6 +371,7 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
     CompoundButton.OnCheckedChangeListener mCheckedChangedListener = new CompoundButton.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+            //compoundButton.getId();
             onSwitchButtonClicked();
         }
     };

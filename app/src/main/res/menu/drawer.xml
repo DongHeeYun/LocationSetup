@@ -18,6 +18,11 @@
             android:title="Sync"
             android:icon="@drawable/ic_sync"
             app:actionLayout="@layout/widget_switch"/>
+        <item
+            android:id="@+id/geofence"
+            android:title="Geofence"
+            android:icon="@drawable/ic_geof"
+            app:actionLayout="@layout/widget_switch"/>
     </group>
 
     <group

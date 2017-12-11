@@ -40,7 +40,7 @@ public class ApplyActivity extends Activity implements View.OnClickListener {
         findViewById(R.id.cancel).setOnClickListener(this);
 
         Intent intent = getIntent();
-        item = (LocationItem) intent.getSerializableExtra("setting");
+        item = (LocationItem) intent.getSerializableExtra("item");
 
         String name = item.getName();
         int wifi = item.getWifi();

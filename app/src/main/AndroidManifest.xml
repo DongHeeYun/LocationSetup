@@ -43,6 +43,7 @@
         <activity android:name=".LocationSettingActivity"
             android:label="위치 설정"/>
 
+        <service android:name=".GeofenceService"/>
     </application>
 
 </manifest>
