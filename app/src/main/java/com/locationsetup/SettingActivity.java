@@ -3,6 +3,7 @@ package com.locationsetup;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Icon;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 
@@ -54,7 +56,8 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     private int ACT_LOCSET = 111;
 
     EditText set_title, set_address;
-    Button set_wifi, set_blue, set_sound, set_bright, set_search, set_cancle, set_save;
+    Button set_search, set_cancle, set_save, set_change;
+    ImageButton set_wifi, set_blue, set_sound, set_bright;
     SeekBar sound_seekbar, bright_seekbar;
     SupportMapFragment mapFragment;
     LinearLayout soundLayout, brightLayout;
@@ -87,6 +90,10 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
             getLastLocation();
         }
         initView();
+        if(item !=null) {
+            set_save.setVisibility(Button.GONE);
+            set_change.setVisibility(Button.VISIBLE);
+        }
     }
 
     @SuppressWarnings("MissingPermission")
@@ -162,6 +169,60 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         }
     }
 
+    private void setIcon(){
+        switch (locationItem.getWifi()) {
+            case 0:
+                set_wifi.setImageResource(R.drawable.ic_wifi_none);
+                break;
+            case 1:
+                set_wifi.setImageResource(R.drawable.ic_wifi_on);
+                break;
+            case 2:
+                set_wifi.setImageResource(R.drawable.ic_wifi_off);
+                break;
+            default:
+                set_wifi.setImageResource(R.drawable.ic_wifi_none);
+        }
+
+        switch (locationItem.getBluetooth()) {
+            case 0:
+                set_blue.setImageResource(R.drawable.ic_bt_none);
+                break;
+            case 1:
+                set_blue.setImageResource(R.drawable.ic_bt_on);
+                break;
+            case 2:
+                set_blue.setImageResource(R.drawable.ic_bt_off);
+                break;
+            default:
+                set_blue.setImageResource(R.drawable.ic_bt_none);
+        }
+
+        switch (locationItem.getSound()) {
+            case 0:
+                set_sound.setImageResource(R.drawable.ic_vol_none);
+                break;
+            case 1:
+                set_sound.setImageResource(R.drawable.ic_vol_on);
+                break;
+            case 2:
+                set_sound.setImageResource(R.drawable.ic_vol_vib);
+                break;
+            case 3:
+                set_sound.setImageResource(R.drawable.ic_vol_off);
+                break;
+            default:
+                set_sound.setImageResource(R.drawable.ic_vol_none);
+        }
+
+        int brightness = locationItem.getBrightness();
+        if (brightness < 0) set_bright.setImageResource(R.drawable.ic_brt_none);
+        else if (brightness < 25) set_bright.setImageResource(R.drawable.ic_brt_0);
+        else if (brightness < 50) set_bright.setImageResource(R.drawable.ic_brt_1);
+        else if (brightness < 75) set_bright.setImageResource(R.drawable.ic_brt_2);
+        else set_bright.setImageResource(R.drawable.ic_brt_3);
+    }
+
     private void searchLocation(String address, int num){
         Geocoder geocoder = new Geocoder(this, Locale.KOREA);
         try {
@@ -196,13 +257,14 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     private void initView(){
         set_title = (EditText)findViewById(R.id.setting_title);
         set_address = (EditText)findViewById(R.id.setting_address);
-        set_wifi = (Button)findViewById(R.id.setting_wifi);
-        set_blue = (Button)findViewById(R.id.setting_blue);
-        set_bright = (Button)findViewById(R.id.setting_bright);
-        set_sound = (Button)findViewById(R.id.setting_sound);
+        set_wifi = (ImageButton)findViewById(R.id.setting_wifi);
+        set_blue = (ImageButton)findViewById(R.id.setting_blue);
+        set_bright = (ImageButton)findViewById(R.id.setting_bright);
+        set_sound = (ImageButton)findViewById(R.id.setting_sound);
         set_search = (Button)findViewById(R.id.setting_search);
         set_cancle = (Button)findViewById(R.id.setting_cancle);
         set_save = (Button)findViewById(R.id.setting_save);
+        set_change = (Button)findViewById(R.id.setting_change);
         sound_seekbar = (SeekBar)findViewById(R.id.sound_seekbar);
         bright_seekbar = (SeekBar)findViewById(R.id.bright_seekbar);
         soundLayout = (LinearLayout)findViewById(R.id.sound_layout);
@@ -211,18 +273,16 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         // value initializing
         set_title.setText(locationItem.getName());
         set_address.setText(locationItem.getAddress());
-        set_wifi.setText("wifi"+Integer.toString(locationItem.getWifi()));
-        set_blue.setText("bluetooth"+Integer.toString(locationItem.getBluetooth()));
         if (locationItem.getBrightness() != -1) {
             brightLayout.setVisibility(LinearLayout.VISIBLE);
             bright_seekbar.setProgress(locationItem.getBrightness());
         }
-        set_sound.setText("sound"+Integer.toString(locationItem.getSound()));
         if (locationItem.getSound() == 2) {
             locationItem.changeSound();
             soundLayout.setVisibility(LinearLayout.VISIBLE);
             sound_seekbar.setProgress(locationItem.getVolume());
         }
+        setIcon();
 
         mapFragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.setting_map);
         mapFragment.getMapAsync(this);
@@ -234,6 +294,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         set_search.setOnClickListener(this);
         set_cancle.setOnClickListener(this);
         set_save.setOnClickListener(this);
+        set_change.setOnClickListener(this);
         sound_seekbar.setOnSeekBarChangeListener(this);
         bright_seekbar.setOnSeekBarChangeListener(this);
     }
@@ -243,26 +304,26 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         switch(v.getId()){
             case R.id.setting_wifi:
                 locationItem.changeWifi();
-                set_wifi.setText("wifi"+Integer.toString(locationItem.getWifi()));
+                setIcon();
                 break;
             case R.id.setting_blue:
                 locationItem.changeBluetooth();
-                set_blue.setText("bluetooth"+Integer.toString(locationItem.getBluetooth()));
+                setIcon();
                 break;
             case R.id.setting_sound:
-                if(locationItem.getSound()==0||locationItem.getSound()==1){
-                    locationItem.changeSound();
-                }
-                else if(locationItem.getSound()==2) {
+                if(locationItem.getSound()==0){
                     locationItem.changeSound();
                     soundLayout.setVisibility(LinearLayout.VISIBLE);
                     sound_seekbar.setProgress(locationItem.getVolume());
                 }
-                else{
+                else if(locationItem.getSound()==1) {
+                    locationItem.changeSound();
                     soundLayout.setVisibility(LinearLayout.GONE);
+                }
+                else{
                     locationItem.changeSound();
                 }
-                set_sound.setText("sound"+Integer.toString(locationItem.getSound()));
+                setIcon();
                 break;
             case R.id.setting_bright:
                 if(locationItem.getBrightness()==-1){
@@ -274,6 +335,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                     locationItem.setBrightness(-1);
                     brightLayout.setVisibility(LinearLayout.GONE);
                 }
+                setIcon();
                 break;
             case R.id.setting_cancle:
                 locationItem = (LocationItem) fileManager.getItems().get(0);
@@ -286,6 +348,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                 break;
             case R.id.setting_save:
                 locationItem.setName(set_title.getText().toString());
+                locationItem.setId(Integer.toString(fileManager.getIdCounter()));
                 fileManager.addItem(locationItem);
                 fileManager.saveFile();
                 setResult(RESULT_OK);
@@ -294,6 +357,16 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
             case R.id.setting_search:
                 searchLocation(set_address.getText().toString());
                 break;
+            case R.id.setting_change:
+                locationItem.setName(set_title.getText().toString());
+                for(int i=0;i<fileManager.items.size();i++){
+                    if(fileManager.items.get(i).getId().equals(locationItem.getId())){
+                        fileManager.items.remove(i);
+                        fileManager.items.add(i,locationItem);
+                    }
+                }
+                setResult(RESULT_OK);
+                finish();
         }
     }
 
@@ -310,6 +383,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
             locationItem.setVolume(progress);
         }else{
             locationItem.setBrightness(progress);
+            setIcon();
         }
     }
 

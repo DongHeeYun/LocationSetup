@@ -22,6 +22,8 @@ public class FileManager {
 
     private static FileManager fileManager = null;
 
+    private int idCounter = 0;
+
     private String title = "player.dat";
 
     public static ArrayList<LocationItem> items;
@@ -90,6 +92,12 @@ public class FileManager {
                 e.printStackTrace();
             }
         }
+    }
+
+    public int getIdCounter(){
+        int returnValue = idCounter;
+        idCounter++;
+        return returnValue;
     }
 
     public void addItem(LocationItem item){

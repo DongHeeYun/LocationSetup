@@ -155,6 +155,7 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
                 break;
             case 3:
                 types[2] = R.drawable.ic_vol_off;
+                break;
             default:
                 types[2] = R.drawable.ic_vol_none;
         }
