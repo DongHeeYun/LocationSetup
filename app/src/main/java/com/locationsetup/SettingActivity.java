@@ -69,6 +69,8 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
 
     FileManager fileManager;
 
+    boolean isChange = false;
+
 
 
     @Override
@@ -85,6 +87,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         LocationItem item = (LocationItem) intent.getSerializableExtra("item");
         if (item != null) {
             locationItem = item;
+            isChange = true;
         } else {
             locationItem = new LocationItem(null,null,0,0);
             getLastLocation();
@@ -93,6 +96,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         if(item !=null) {
             set_save.setVisibility(Button.GONE);
             set_change.setVisibility(Button.VISIBLE);
+
         }
     }
 
@@ -277,8 +281,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
             brightLayout.setVisibility(LinearLayout.VISIBLE);
             bright_seekbar.setProgress(locationItem.getBrightness());
         }
-        if (locationItem.getSound() == 2) {
-            locationItem.changeSound();
+        if (locationItem.getSound() == 1) {
             soundLayout.setVisibility(LinearLayout.VISIBLE);
             sound_seekbar.setProgress(locationItem.getVolume());
         }
@@ -297,6 +300,17 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         set_change.setOnClickListener(this);
         sound_seekbar.setOnSeekBarChangeListener(this);
         bright_seekbar.setOnSeekBarChangeListener(this);
+        set_address.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean b) {
+                if(b){
+                    set_address.setText("");
+                }
+                else{
+                    set_address.setText(locationItem.getAddress());
+                }
+            }
+        });
     }
 
     @Override
@@ -367,6 +381,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                 }
                 setResult(RESULT_OK);
                 finish();
+                break;
         }
     }
 
@@ -375,6 +390,15 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     public void onMapReady(GoogleMap googleMap) {
         this.googleMap = googleMap;
+        if(isChange){
+            LatLng latLng = new LatLng(locationItem.getLatitude(), locationItem.getLongitude());
+            if (marker != null){
+                marker.remove();
+            }
+            marker = googleMap.addMarker(new MarkerOptions().position(latLng).title("여기"));
+            googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+            googleMap.moveCamera(CameraUpdateFactory.zoomTo(18));
+        }
     }
 
     @Override
