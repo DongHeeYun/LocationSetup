@@ -37,7 +37,7 @@ public class GeofenceManager implements GoogleApiClient.ConnectionCallbacks, Goo
     public static final long GEOFENCE_EXPIRATION_IN_HOURS = 12;
     public static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS =
             GEOFENCE_EXPIRATION_IN_HOURS * 60 * 60 * 1000;
-    public static final float GEOFENCE_RADIUS_IN_METERS = 200; // 1 mile, 1.6 km
+    public static final float GEOFENCE_RADIUS_IN_METERS = 100; // 1 mile, 1.6 km
 
     protected GoogleApiClient mGoogleApiClient;
     protected List<Geofence> mGeofenceList;
@@ -59,11 +59,14 @@ public class GeofenceManager implements GoogleApiClient.ConnectionCallbacks, Goo
         mGoogleApiClient.connect();
     }
 
-    public GeofencingRequest getGeofencingRequest() {
+    public GeofencingRequest getGeofencingRequest(List<LocationItem> items) {
 
-        for (LocationItem item : FileManager.items) {
+        for (LocationItem item : items) {
+            /*String requestId = item.getId();
+            if (requestId == null) requestId = item.getName();*/
+            String requestId = item.getName();
             mGeofenceList.add(new Geofence.Builder()
-                    .setRequestId(item.getId())
+                    .setRequestId(requestId)
                     .setCircularRegion(
                             item.getLatitude(),
                             item.getLongitude(),
@@ -83,16 +86,17 @@ public class GeofenceManager implements GoogleApiClient.ConnectionCallbacks, Goo
         return builder.build();
     }
 
-    public boolean startservice() {
+    public void addGeofences(List<LocationItem> items) {
         if (!mGoogleApiClient.isConnected()) {
             Log.i(TAG, "GoogleApiClient is not connected");
-            return false;
+            return;
         }
+        if (items.size() == 0) return;
 
         try {
             PendingResult<Status> g = LocationServices.GeofencingApi.addGeofences(
                     mGoogleApiClient,
-                    getGeofencingRequest(),
+                    getGeofencingRequest(items),
                     getGeofencePendingIntent()
             );
             g.setResultCallback(new ResultCallback<Status>() {
@@ -121,12 +125,11 @@ public class GeofenceManager implements GoogleApiClient.ConnectionCallbacks, Goo
             }); // Result processed in onResult().
         } catch (SecurityException e) {
             Log.w(TAG, "SecurityException:", e);
-            return false;
+            return;
         }
-        return true;
     }
 
-    public boolean stopservice() {
+    public boolean removeGenfences() {
         if (!mGoogleApiClient.isConnected()) {
             return false;
         }
@@ -140,6 +143,57 @@ public class GeofenceManager implements GoogleApiClient.ConnectionCallbacks, Goo
                     String message;
                     if (status.isSuccess()) {
                         // 성공시 동작
+                    } else {
+                        // 실패시 동작
+                    }
+                }
+            });
+        } catch (SecurityException e) {
+            Log.w(TAG, "SecurityException:", e);
+        }
+        return true;
+    }
+
+    public boolean removeGeofences(String geofenceId) {
+        if (!mGoogleApiClient.isConnected()) {
+            return false;
+        }
+        List<String> geofenceIds = new ArrayList<>();
+        geofenceIds.add(geofenceId);
+        try {
+            LocationServices.GeofencingApi.removeGeofences(
+                    mGoogleApiClient,
+                    geofenceIds
+            ).setResultCallback(new ResultCallback<Status>() {
+                @Override
+                public void onResult(Status status) {
+                    String message;
+                    if (status.isSuccess()) {
+                        // 성공시 동작
+                    } else {
+                        // 실패시 동작
+                    }
+                }
+            });
+        } catch (SecurityException e) {
+            Log.w(TAG, "SecurityException:", e);
+        }
+        return true;
+    }
+
+    public boolean restartGeofences() {
+        if (!mGoogleApiClient.isConnected()) {
+            return false;
+        }
+        try {
+            LocationServices.GeofencingApi.removeGeofences(
+                    mGoogleApiClient,
+                    getGeofencePendingIntent()
+            ).setResultCallback(new ResultCallback<Status>() {
+                @Override
+                public void onResult(Status status) {
+                    if (status.isSuccess()) {
+                        addGeofences(FileManager.items);
                     } else {
                         // 실패시 동작
                     }

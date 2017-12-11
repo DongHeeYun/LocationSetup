@@ -45,8 +45,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     private GoogleMap mGoogleMap;
     FirebaseManager firebaseManager;
 
-    double avgLat = 37.582125;
-    double avgLnt = 127.010412;
+    double avgLat = 36.590530;
+    double avgLnt = 127.952934;
 
     public MapFragment() {
         // Required empty public constructor
@@ -169,7 +169,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         }
 
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(avgLat, avgLnt)));
-        googleMap.animateCamera(CameraUpdateFactory.zoomTo(13));
+        googleMap.animateCamera(CameraUpdateFactory.zoomTo(7));
     }
 
     @Override

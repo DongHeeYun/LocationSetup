@@ -70,7 +70,8 @@ public class GeofenceService extends IntentService {
 
         for (Geofence geofence : triggeringGeofences) {
             for (LocationItem item : FileManager.items) {
-                if (geofence.getRequestId().equals(item.getId())) {
+                if (geofence.getRequestId().equals(item.getId())
+                        || geofence.getRequestId().equals(item.getName())) {
                     return item;
                 }
             }
@@ -79,7 +80,7 @@ public class GeofenceService extends IntentService {
     }
 
     private void sendNotification(LocationItem item) {
-        if (item == null) return;
+        if (item == null || !item.isEnabled()) return;
         // Create an explicit content Intent that starts the main Activity.
         Intent notificationIntent = new Intent(getApplicationContext(), ApplyActivity.class);
         notificationIntent.putExtra("item", item);
@@ -95,8 +96,8 @@ public class GeofenceService extends IntentService {
         builder.setSmallIcon(R.drawable.ic_noti)
                 .setLargeIcon(BitmapFactory.decodeResource(getResources(),
                                         R.drawable.ic_noti))
-                .setContentTitle(item.getName())
-                .setContentText("Geofending 메시지입니다.")
+                .setContentTitle("'" + item.getName() + "' 진입 감지")
+                .setContentText("'" + item.getName() + "' 설정으로 변경하기가 준비되었습니다.")
                 .setContentIntent(notificationPendingIntent);
 
         builder.setAutoCancel(true);

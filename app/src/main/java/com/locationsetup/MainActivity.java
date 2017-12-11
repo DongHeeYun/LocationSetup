@@ -35,12 +35,16 @@ import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseUser;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity implements ListFragment.OnAddButtonClickListener,
-        MapFragment.OnAddButtonClickListener {
+        FirebaseManager.OnItemChangedListener, MapFragment.OnAddButtonClickListener {
 
     private final String TAG = MainActivity.class.getSimpleName();
     private final String PREF_NAME = "options";
     private final String PREF_SYNC = "synchronization";
+    private final String PREF_GEOF = "geofencing";
     private final int PAGE_NUMBER = 2;
 
     public final int ON_DO_NOT_DISTURB_CALLBACK_CODE = 1001;
@@ -49,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
     public static final int REQUEST_ADD_ITEM = 4001;
     public static final int REQUEST_UPDATE_ITEM = 5001;
     public static boolean isSynchronized;
-    private boolean isGeofencing = true;
+    public static boolean isGeofencing;
 
     private DrawerLayout mDrawerLayout;
     private NavigationView navigationView;
@@ -87,8 +91,10 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
         SharedPreferences pref = getSharedPreferences(PREF_NAME, Activity.MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
         editor.putBoolean(PREF_SYNC, isSynchronized);
+        editor.putBoolean(PREF_GEOF, isGeofencing);
         editor.commit();
         Log.i(TAG, "sync:" + isSynchronized);
+        Log.i(TAG, "geof:" + isGeofencing);
     }
 
     public void requestWriteSettingsPermission(Activity context){
@@ -114,11 +120,13 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
 
     public void initialize() {
         mFirebaseManager = FirebaseManager.getInstance();
+        mFirebaseManager.setItemChangedListener(this);
         mFileManager = FileManager.getFileManager(this);
         mGeofenceManager = new GeofenceManager(this);
 
         SharedPreferences pref = getSharedPreferences(PREF_NAME, Activity.MODE_PRIVATE);
         isSynchronized = pref.getBoolean(PREF_SYNC, true);
+        isGeofencing = pref.getBoolean(PREF_GEOF, false);
         Log.d(TAG, "synchronized:" + isSynchronized);
 
         if (isSynchronized) {
@@ -158,10 +166,10 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
                 Log.d(TAG, "geofBtn:" + b);
                 if (b) {
                     isGeofencing = true;
-                    mGeofenceManager.startservice();
+                    mGeofenceManager.addGeofences(FileManager.items);
                 } else {
                     isGeofencing = false;
-                    mGeofenceManager.stopservice();
+                    mGeofenceManager.removeGenfences();
                 }
             }
         });
@@ -173,26 +181,6 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
         mTab.setupWithViewPager(mViewPager);
 
         updateUI();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        switch (id) {
-            case android.R.id.home:
-                mDrawerLayout.openDrawer(GravityCompat.START);
-                return true;
-            case R.id.action_settings:
-                return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     private class MainPagerAdapter extends FragmentPagerAdapter {
@@ -292,11 +280,21 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
             case REQUEST_ADD_ITEM:
                 if (resultCode == RESULT_OK) {
                     mFirebaseManager.notifyItemChange();
+                    LocationItem item = (LocationItem)data.getSerializableExtra("item");
+                    List<LocationItem> items = new ArrayList<>();
+                    items.add(item);
+                    mGeofenceManager.addGeofences(items);
+                    if (isSynchronized) {
+                        mFirebaseManager.addItem(item);
+                    }
                 }
                 break;
             case REQUEST_UPDATE_ITEM:
                 if (resultCode == RESULT_OK) {
                     mFirebaseManager.notifyItemChange();
+                    if (isSynchronized) {
+                        mFirebaseManager.updateItem((LocationItem)data.getSerializableExtra("item"));
+                    }
                 }
                 break;
         }
@@ -336,10 +334,11 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
                     onSwitchButtonClicked();
                     break;
                 case R.id.sign:
-                    if (mFirebaseManager.authProcess()) {
+                    if (user == null) {
                         Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                         startActivityForResult(intent, REQ_START_MAIN);
                     } else {
+                        mFirebaseManager.signout();
                         isSynchronized = false;
                         syncBtn.setChecked(isSynchronized);
                         updateUI();
@@ -381,6 +380,11 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
         startAddItem(type, position);
     }
 
+    @Override
+    public void onItemChanged() {
+        mGeofenceManager.restartGeofences();
+    }
+
     public void startAddItem(int type, int position) {
         Intent intent =  new Intent(this, SettingActivity.class);
         int requestCode;
@@ -388,7 +392,7 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
             requestCode = REQUEST_ADD_ITEM;
         } else {
             requestCode = REQUEST_UPDATE_ITEM;
-            intent.putExtra("item", FileManager.items.get(position));
+            intent.putExtra("position", position);
         }
         startActivityForResult(intent, requestCode);
     }

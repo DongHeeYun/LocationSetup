@@ -24,7 +24,7 @@ public class LoginActivity extends Activity implements
     private static final String TAG = LoginActivity.class.getSimpleName();
 
     private TextView mStatusTextView;
-    private TextView mDetailTextView;
+    private TextView mVerifiedTextView;
     private EditText mEmailField;
     private EditText mPasswordField;
 
@@ -39,22 +39,24 @@ public class LoginActivity extends Activity implements
 
         // Views
         mStatusTextView = findViewById(R.id.status);
-        mDetailTextView = findViewById(R.id.detail);
         mEmailField = findViewById(R.id.field_email);
         mPasswordField = findViewById(R.id.field_password);
+        mVerifiedTextView = findViewById(R.id.verify_complete);
 
         // Buttons
         findViewById(R.id.email_sign_in_button).setOnClickListener(this);
         findViewById(R.id.email_create_account_button).setOnClickListener(this);
         findViewById(R.id.sign_out_button).setOnClickListener(this);
         findViewById(R.id.verify_email_button).setOnClickListener(this);
+        mVerifiedTextView.setOnClickListener(this);
+        mStatusTextView.setOnClickListener(this);
 
         // [START initialize_auth]
         mAuth = FirebaseAuth.getInstance();
         // [END initialize_auth]
     }
 
-    // [START on_start_check_user]
+    /*// [START on_start_check_user]
     @Override
     public void onStart() {
         super.onStart();
@@ -64,7 +66,7 @@ public class LoginActivity extends Activity implements
             gobackToMain();
         }
     }
-    // [END on_start_check_user]
+    // [END on_start_check_user]*/
 
     private void createAccount(String email, String password) {
         Log.d(TAG, "createAccount:" + email);
@@ -85,7 +87,7 @@ public class LoginActivity extends Activity implements
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
-                            Toast.makeText(LoginActivity.this, "Authentication failed.",
+                            Toast.makeText(LoginActivity.this, "계정 생성 실패",
                                     Toast.LENGTH_SHORT).show();
                             updateUI(null);
                         }
@@ -106,13 +108,20 @@ public class LoginActivity extends Activity implements
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithEmail:success");
-                            gobackToMain();
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            if (user.isEmailVerified()) {
+                                gobackToMain();
+                            } else {
+                                mStatusTextView.setText("본인인증 절차를 진행해주세요.(이메일 확인)");
+                                mVerifiedTextView.setVisibility(View.VISIBLE);
+                                updateUI(user);
+                            }
+                            // Sign in success, update UI with the signed-in user's information
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithEmail:failure", task.getException());
-                            Toast.makeText(LoginActivity.this, "Authentication failed.",
+                            Toast.makeText(LoginActivity.this, "인증 실패",
                                     Toast.LENGTH_SHORT).show();
                             updateUI(null);
                         }
@@ -149,12 +158,12 @@ public class LoginActivity extends Activity implements
 
                         if (task.isSuccessful()) {
                             Toast.makeText(LoginActivity.this,
-                                    "Verification email sent to " + user.getEmail(),
+                                    user.getEmail() + "으로 본인인증 메일을 보냈습니다.",
                                     Toast.LENGTH_SHORT).show();
                         } else {
                             Log.e(TAG, "sendEmailVerification", task.getException());
                             Toast.makeText(LoginActivity.this,
-                                    "Failed to send verification email.",
+                                    "본인인증 메일 보내지 못하였습니다.",
                                     Toast.LENGTH_SHORT).show();
                         }
                         // [END_EXCLUDE]
@@ -187,17 +196,14 @@ public class LoginActivity extends Activity implements
 
     private void updateUI(FirebaseUser user) {
         if (user != null) {
-            mStatusTextView.setText(getString(R.string.emailpassword_status_fmt,
-                    user.getEmail(), user.isEmailVerified()));
-            mDetailTextView.setText(getString(R.string.firebase_status_fmt, user.getUid()));
-
+            mStatusTextView.setText("본인인증 완료 후 아래 버튼을 불러주세요.");
+            mVerifiedTextView.setVisibility(View.VISIBLE);
             findViewById(R.id.email_password_buttons).setVisibility(View.GONE);
             findViewById(R.id.email_password_fields).setVisibility(View.GONE);
             findViewById(R.id.signed_in_buttons).setVisibility(View.VISIBLE);
             findViewById(R.id.verify_email_button).setEnabled(!user.isEmailVerified());
         } else {
             mStatusTextView.setText(R.string.signed_out);
-            mDetailTextView.setText(null);
 
             findViewById(R.id.email_password_buttons).setVisibility(View.VISIBLE);
             findViewById(R.id.email_password_fields).setVisibility(View.VISIBLE);
@@ -221,6 +227,13 @@ public class LoginActivity extends Activity implements
             signOut();
         } else if (i == R.id.verify_email_button) {
             sendEmailVerification();
+        } else if (i == R.id.verify_complete) {
+            signIn(mEmailField.getText().toString(), mPasswordField.getText().toString());
+            /*boolean isVerified = mAuth.getCurrentUser().isEmailVerified();
+            Log.d(TAG, "email verification:" + isVerified);
+            if (isVerified) {
+                gobackToMain();
+            }*/
         }
     }
 }

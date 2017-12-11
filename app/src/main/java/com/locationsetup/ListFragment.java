@@ -90,13 +90,14 @@ public class ListFragment extends Fragment implements ListAdapter.ItemClickListe
 
     @Override
     public void onItemLongClick(int position) {
-        LocationItem item = mAdapter.getItem(position);
         // 삭제 확인 다이얼로그
         //mAdapter.removeItem(position);
-        FileManager.items.remove(position);
-
-        Log.d(TAG, "item removed:" + item.getName());
+        LocationItem item = FileManager.items.remove(position);
+        if (MainActivity.isSynchronized) {
+            firebaseManager.removeItem(item);
+        }
         firebaseManager.notifyItemChange();
+        Log.d(TAG, "item removed:" + item.getName());
         //Toast.makeText(getActivity(), item.getName() + "removed", Toast.LENGTH_SHORT).show();
     }
 

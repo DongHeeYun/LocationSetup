@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -51,9 +52,9 @@ public class FirebaseManager {
         for (OnItemChangedListener listener : mCallback)
             listener.onItemChanged();
 
-        if (MainActivity.isSynchronized) {
+        /*if (MainActivity.isSynchronized) {
             saveCurrentItems(mAuth.getCurrentUser());
-        }
+        }*/
     }
 
     private FirebaseManager() {
@@ -83,14 +84,20 @@ public class FirebaseManager {
         }
     };
 
+
     public void saveCurrentItems(FirebaseUser user) {
         String userId = user.getUid();
         final Map<String, Object> childUpdates = new HashMap<>();
         DatabaseReference ref = mDatabase.getReference(userId + "/items");
+        int index = 0;
         for (LocationItem item : FileManager.items) {
-            String id = ref.push().getKey();
-            item.setId(id);
-            childUpdates.put(id, item);
+            if (item.getId() == null) {
+                String id = ref.push().getKey();
+                item.setId(id);
+                FileManager.items.get(index).setId(id);
+            }
+            childUpdates.put(item.getId(), item);
+            index++;
         }
         ref.runTransaction(new Transaction.Handler() {
             @Override
@@ -106,39 +113,69 @@ public class FirebaseManager {
                     Log.w(TAG, "transaction failed:" + databaseError.getMessage());
                     return;
                 }
-                Log.d(TAG, "transaction complete");
             }
         });
     }
 
-    /*public void onItemUpdated(int position) {
+    public void addItem(LocationItem item) {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) {
-            //Toast.makeText(this, R.string.request_auth, Toast.LENGTH_SHORT).show();
+            return ;
+        }
+        String userId = user.getUid();
+        DatabaseReference ref = mDatabase.getReference(userId + "/items");
+        String id = ref.push().getKey();
+        FileManager.items.get(FileManager.items.size()-1).setId(id);
+        item.setId(id);
+        ref.child(id).setValue(item).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.d(TAG, "item added successfully");
+            }
+        });
+    }
+
+    public void updateItem(LocationItem item) {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) {
             return;
         }
         String userId = user.getUid();
-        final Map<String, Object> childUpdates = new HashMap<>();
-        DatabaseReference ref = mDatabase.getReference(userId + "/items");
-        for (LocationItem item : FileManager.items) {
-            String id = ref.push().getKey();
-            item.setId(id);
-            childUpdates.put(id, item);
-        }
-    }*/
+        DatabaseReference ref = mDatabase.getReference(userId + "/items").child(item.getId());
+        ref.setValue(item).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.d(TAG, "item updated successfully");
+            }
+        });
+    }
 
-    public boolean authProcess() {
+    public void removeItem(LocationItem item) {
         FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            mAuth.signOut();
-            return false;
+        if (user == null) {
+            return;
         }
-        return true;
+        String userId = user.getUid();
+        DatabaseReference ref = mDatabase.getReference(userId + "/items").child(item.getId());
+        ref.removeValue().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.d(TAG, "item removed successfully");
+            }
+        });
+    }
+
+    public void signout() {
+        mAuth.signOut();
     }
 
     public FirebaseUser getUser() {
-        return mAuth.getCurrentUser();
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            if (!user.isEmailVerified())
+                return null;
+        }
+        return user;
     }
-
 
 }

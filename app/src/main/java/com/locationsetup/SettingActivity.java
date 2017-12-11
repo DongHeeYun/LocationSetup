@@ -3,7 +3,6 @@ package com.locationsetup;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.Icon;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -17,6 +16,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -44,7 +44,8 @@ import pub.devrel.easypermissions.EasyPermissions;
  * Created by inter on 2017-11-07.
  */
 
-public class SettingActivity extends AppCompatActivity implements View.OnClickListener,OnMapReadyCallback, SeekBar.OnSeekBarChangeListener{
+public class SettingActivity extends AppCompatActivity implements View.OnClickListener,OnMapReadyCallback,
+        SeekBar.OnSeekBarChangeListener, GoogleMap.OnMarkerDragListener {
     private static final String TAG = "SettingActivity";
 
     private static final int RC_LOCATION=1;
@@ -55,9 +56,11 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
 
     private int ACT_LOCSET = 111;
 
+    private int position;
+
+    TextView set_cancle, set_save;
     EditText set_title, set_address;
-    Button set_search, set_cancle, set_save, set_change;
-    ImageButton set_wifi, set_blue, set_sound, set_bright;
+    ImageButton set_wifi, set_blue, set_sound, set_bright, set_search;
     SeekBar sound_seekbar, bright_seekbar;
     SupportMapFragment mapFragment;
     LinearLayout soundLayout, brightLayout;
@@ -68,8 +71,6 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     Location location;
 
     FileManager fileManager;
-
-    boolean isChange = false;
 
 
 
@@ -84,20 +85,14 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
 
         // LocationItem 수정일 경우
         Intent intent = getIntent();
-        LocationItem item = (LocationItem) intent.getSerializableExtra("item");
-        if (item != null) {
-            locationItem = item;
-            isChange = true;
+        position = intent.getIntExtra("position", -1);
+        if (position != -1) {
+            locationItem = FileManager.items.get(position);
         } else {
             locationItem = new LocationItem(null,null,0,0);
             getLastLocation();
         }
         initView();
-        if(item !=null) {
-            set_save.setVisibility(Button.GONE);
-            set_change.setVisibility(Button.VISIBLE);
-
-        }
     }
 
     @SuppressWarnings("MissingPermission")
@@ -111,7 +106,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                         public void onComplete(@NonNull Task<Location> task) {
                             if (task.isSuccessful() && task.getResult() != null) {
                                 location = task.getResult();
-                                locationItem = new LocationItem(null,null,location.getLatitude(),location.getLongitude());
+                                locationItem = new LocationItem(null,null, location.getLatitude(), location.getLongitude());
                                 try {
                                     Geocoder geocoder = new Geocoder(context, Locale.KOREA);
                                     List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(),1);
@@ -121,6 +116,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                                         set_address.setText(locationItem.getAddress());
                                         LatLng latLng = new LatLng(locationItem.getLatitude(),locationItem.getLongitude());
                                         marker = googleMap.addMarker(new MarkerOptions().position(latLng).title("여기"));
+                                        marker.setDraggable(true);
                                         googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
                                         googleMap.moveCamera(CameraUpdateFactory.zoomTo(18));
                                         locationItem.setAddress(address.getAddressLine(0));
@@ -139,6 +135,14 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
             // Do not have permissions, request them now
             EasyPermissions.requestPermissions(this, "This app needs access to your location to know where you are.", RC_LOCATION, perms);
         }
+    }
+
+    private void getItemLocation() {
+        LatLng latLng = new LatLng(locationItem.getLatitude(),locationItem.getLongitude());
+        marker = googleMap.addMarker(new MarkerOptions().position(latLng).title("여기"));
+        marker.setDraggable(true);
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        googleMap.moveCamera(CameraUpdateFactory.zoomTo(18));
     }
 
     private void searchLocation(String address){
@@ -164,6 +168,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                         marker.remove();
                     }
                     marker = googleMap.addMarker(new MarkerOptions().position(latLng).title("여기"));
+                    marker.setDraggable(true);
                     googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
                     googleMap.moveCamera(CameraUpdateFactory.zoomTo(18));
                 }
@@ -171,60 +176,6 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private void setIcon(){
-        switch (locationItem.getWifi()) {
-            case 0:
-                set_wifi.setImageResource(R.drawable.ic_wifi_none);
-                break;
-            case 1:
-                set_wifi.setImageResource(R.drawable.ic_wifi_on);
-                break;
-            case 2:
-                set_wifi.setImageResource(R.drawable.ic_wifi_off);
-                break;
-            default:
-                set_wifi.setImageResource(R.drawable.ic_wifi_none);
-        }
-
-        switch (locationItem.getBluetooth()) {
-            case 0:
-                set_blue.setImageResource(R.drawable.ic_bt_none);
-                break;
-            case 1:
-                set_blue.setImageResource(R.drawable.ic_bt_on);
-                break;
-            case 2:
-                set_blue.setImageResource(R.drawable.ic_bt_off);
-                break;
-            default:
-                set_blue.setImageResource(R.drawable.ic_bt_none);
-        }
-
-        switch (locationItem.getSound()) {
-            case 0:
-                set_sound.setImageResource(R.drawable.ic_vol_none);
-                break;
-            case 1:
-                set_sound.setImageResource(R.drawable.ic_vol_on);
-                break;
-            case 2:
-                set_sound.setImageResource(R.drawable.ic_vol_vib);
-                break;
-            case 3:
-                set_sound.setImageResource(R.drawable.ic_vol_off);
-                break;
-            default:
-                set_sound.setImageResource(R.drawable.ic_vol_none);
-        }
-
-        int brightness = locationItem.getBrightness();
-        if (brightness < 0) set_bright.setImageResource(R.drawable.ic_brt_none);
-        else if (brightness < 25) set_bright.setImageResource(R.drawable.ic_brt_0);
-        else if (brightness < 50) set_bright.setImageResource(R.drawable.ic_brt_1);
-        else if (brightness < 75) set_bright.setImageResource(R.drawable.ic_brt_2);
-        else set_bright.setImageResource(R.drawable.ic_brt_3);
     }
 
     private void searchLocation(String address, int num){
@@ -261,31 +212,20 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     private void initView(){
         set_title = (EditText)findViewById(R.id.setting_title);
         set_address = (EditText)findViewById(R.id.setting_address);
-        set_wifi = (ImageButton)findViewById(R.id.setting_wifi);
-        set_blue = (ImageButton)findViewById(R.id.setting_blue);
-        set_bright = (ImageButton)findViewById(R.id.setting_bright);
-        set_sound = (ImageButton)findViewById(R.id.setting_sound);
-        set_search = (Button)findViewById(R.id.setting_search);
-        set_cancle = (Button)findViewById(R.id.setting_cancle);
-        set_save = (Button)findViewById(R.id.setting_save);
-        set_change = (Button)findViewById(R.id.setting_change);
+        set_wifi = (ImageButton) findViewById(R.id.setting_wifi);
+        set_blue = (ImageButton) findViewById(R.id.setting_blue);
+        set_bright = (ImageButton) findViewById(R.id.setting_bright);
+        set_sound = (ImageButton) findViewById(R.id.setting_sound);
+        set_search = (ImageButton) findViewById(R.id.setting_search);
+        set_cancle = (TextView) findViewById(R.id.setting_cancle);
+        set_save = (TextView) findViewById(R.id.setting_save);
         sound_seekbar = (SeekBar)findViewById(R.id.sound_seekbar);
         bright_seekbar = (SeekBar)findViewById(R.id.bright_seekbar);
         soundLayout = (LinearLayout)findViewById(R.id.sound_layout);
         brightLayout = (LinearLayout)findViewById(R.id.bright_layout);
 
         // value initializing
-        set_title.setText(locationItem.getName());
-        set_address.setText(locationItem.getAddress());
-        if (locationItem.getBrightness() != -1) {
-            brightLayout.setVisibility(LinearLayout.VISIBLE);
-            bright_seekbar.setProgress(locationItem.getBrightness());
-        }
-        if (locationItem.getSound() == 1) {
-            soundLayout.setVisibility(LinearLayout.VISIBLE);
-            sound_seekbar.setProgress(locationItem.getVolume());
-        }
-        setIcon();
+        initImage();
 
         mapFragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.setting_map);
         mapFragment.getMapAsync(this);
@@ -297,91 +237,136 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         set_search.setOnClickListener(this);
         set_cancle.setOnClickListener(this);
         set_save.setOnClickListener(this);
-        set_change.setOnClickListener(this);
         sound_seekbar.setOnSeekBarChangeListener(this);
         bright_seekbar.setOnSeekBarChangeListener(this);
-        set_address.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean b) {
-                if(b){
-                    set_address.setText("");
-                }
-                else{
-                    set_address.setText(locationItem.getAddress());
-                }
-            }
-        });
     }
 
     @Override
     public void onClick(View v) {
+        int index;
         switch(v.getId()){
             case R.id.setting_wifi:
-                locationItem.changeWifi();
-                setIcon();
+                index = locationItem.changeWifi();
+                if (index == 0) {
+                    set_wifi.setImageResource(R.drawable.ic_wifi_none);
+                } else if (index == 1) {
+                    set_wifi.setImageResource(R.drawable.ic_wifi_on);
+                } else if (index == 2) {
+                    set_wifi.setImageResource(R.drawable.ic_wifi_off);
+                }
                 break;
             case R.id.setting_blue:
-                locationItem.changeBluetooth();
-                setIcon();
+                index = locationItem.changeBluetooth();
+                if (index == 0) {
+                    set_blue.setImageResource(R.drawable.ic_bt_none);
+                } else if (index == 1) {
+                    set_blue.setImageResource(R.drawable.ic_bt_on);
+                } else if (index == 2) {
+                    set_blue.setImageResource(R.drawable.ic_bt_off);
+                }
                 break;
             case R.id.setting_sound:
-                if(locationItem.getSound()==0){
-                    locationItem.changeSound();
+                index = locationItem.changeSound();
+                if (index == 1) {
+                    set_sound.setImageResource(R.drawable.ic_vol_on);
                     soundLayout.setVisibility(LinearLayout.VISIBLE);
-                    sound_seekbar.setProgress(locationItem.getVolume());
-                }
-                else if(locationItem.getSound()==1) {
-                    locationItem.changeSound();
+                } else {
                     soundLayout.setVisibility(LinearLayout.GONE);
+                    if (index == 0) {
+                        set_sound.setImageResource(R.drawable.ic_vol_none);
+                    } else if (index == 2) {
+                        set_sound.setImageResource(R.drawable.ic_vol_vib);
+                    } else if (index == 3) {
+                        set_sound.setImageResource(R.drawable.ic_vol_off);
+                        soundLayout.setVisibility(LinearLayout.GONE);
+                    }
                 }
-                else{
-                    locationItem.changeSound();
-                }
-                setIcon();
+
                 break;
             case R.id.setting_bright:
-                if(locationItem.getBrightness()==-1){
-                    locationItem.setBrightness(0);
-                    brightLayout.setVisibility(LinearLayout.VISIBLE);
-                    bright_seekbar.setProgress(locationItem.getBrightness());
-                }
-                else{
+                if (brightLayout.getVisibility() == View.VISIBLE) {
                     locationItem.setBrightness(-1);
-                    brightLayout.setVisibility(LinearLayout.GONE);
+                    set_bright.setImageResource(R.drawable.ic_brt_none);
+                    brightLayout.setVisibility(View.GONE);
+                } else {
+                    set_bright.setImageResource(R.drawable.ic_brt_0);
+                    brightLayout.setVisibility(View.VISIBLE);
                 }
-                setIcon();
                 break;
             case R.id.setting_cancle:
-                locationItem = (LocationItem) fileManager.getItems().get(0);
-                sound_seekbar.setProgress(locationItem.getVolume());
-                bright_seekbar.setProgress(locationItem.getBrightness());
-                set_address.setText(locationItem.getAddress());
-                set_title.setText(locationItem.getName());
                 setResult(RESULT_CANCELED);
                 finish();
                 break;
             case R.id.setting_save:
                 locationItem.setName(set_title.getText().toString());
-                locationItem.setId(Integer.toString(fileManager.getIdCounter()));
-                fileManager.addItem(locationItem);
-                fileManager.saveFile();
-                setResult(RESULT_OK);
+                if (position != -1) {
+                    FileManager.items.set(position, locationItem);
+                } else {
+                    fileManager.addItem(locationItem);
+                }
+                Intent intent = new Intent();
+                intent.putExtra("item", locationItem);
+                setResult(RESULT_OK, intent);
                 finish();
                 break;
             case R.id.setting_search:
                 searchLocation(set_address.getText().toString());
                 break;
-            case R.id.setting_change:
-                locationItem.setName(set_title.getText().toString());
-                for(int i=0;i<fileManager.items.size();i++){
-                    if(fileManager.items.get(i).getId().equals(locationItem.getId())){
-                        fileManager.items.remove(i);
-                        fileManager.items.add(i,locationItem);
-                    }
-                }
-                setResult(RESULT_OK);
-                finish();
-                break;
+        }
+    }
+
+    private void initImage() {
+
+        set_title.setText(locationItem.getName());
+        set_address.setText(locationItem.getAddress());
+
+        int wifi = locationItem.getWifi();
+        int bluetooth = locationItem.getBluetooth();
+        int sound = locationItem.getSound();
+        int brightness = locationItem.getBrightness();
+
+        // Image Initialize
+        if (wifi == 0)
+            set_wifi.setImageResource(R.drawable.ic_wifi_none);
+        else if (wifi == 1)
+            set_wifi.setImageResource(R.drawable.ic_wifi_on);
+        else if (wifi == 2)
+            set_wifi.setImageResource(R.drawable.ic_wifi_off);
+
+        if (bluetooth == 0)
+            set_blue.setImageResource(R.drawable.ic_bt_none);
+        else if (bluetooth == 1)
+            set_blue.setImageResource(R.drawable.ic_bt_on);
+        else if (bluetooth == 2)
+            set_blue.setImageResource(R.drawable.ic_bt_off);
+
+        if (sound == 0)
+            set_sound.setImageResource(R.drawable.ic_vol_none);
+        else if (sound == 1)
+            set_sound.setImageResource(R.drawable.ic_vol_on);
+        else if (sound == 2)
+            set_sound.setImageResource(R.drawable.ic_vol_vib);
+        else if (sound == 3)
+            set_sound.setImageResource(R.drawable.ic_vol_off);
+
+        if (brightness == -1)
+            set_bright.setImageResource(R.drawable.ic_brt_none);
+        else if (brightness < 25)
+            set_bright.setImageResource(R.drawable.ic_brt_0);
+        else if (brightness < 50)
+            set_bright.setImageResource(R.drawable.ic_brt_1);
+        else if (brightness < 75)
+            set_bright.setImageResource(R.drawable.ic_brt_2);
+        else
+            set_bright.setImageResource(R.drawable.ic_brt_3);
+
+        if (locationItem.getBrightness() != -1) {
+            brightLayout.setVisibility(LinearLayout.VISIBLE);
+            bright_seekbar.setProgress(locationItem.getBrightness());
+        }
+        if (locationItem.getSound() == 2) {
+            soundLayout.setVisibility(LinearLayout.VISIBLE);
+            sound_seekbar.setProgress(locationItem.getVolume());
         }
     }
 
@@ -390,25 +375,47 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     public void onMapReady(GoogleMap googleMap) {
         this.googleMap = googleMap;
-        if(isChange){
-            LatLng latLng = new LatLng(locationItem.getLatitude(), locationItem.getLongitude());
-            if (marker != null){
-                marker.remove();
-            }
-            marker = googleMap.addMarker(new MarkerOptions().position(latLng).title("여기"));
-            googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-            googleMap.moveCamera(CameraUpdateFactory.zoomTo(18));
+        this.googleMap.setOnMarkerDragListener(this);
+
+        if (position != -1) {
+            locationItem = FileManager.items.get(position);
+            getItemLocation();
         }
     }
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        if(seekBar.equals(sound_seekbar)){
+        if (seekBar.equals(sound_seekbar)) {
             locationItem.setVolume(progress);
-        }else{
+        } else {
+            if (progress < 25) {
+                set_bright.setImageResource(R.drawable.ic_brt_0);
+            } else if (progress < 50) {
+                set_bright.setImageResource(R.drawable.ic_brt_1);
+            } else if (progress < 75) {
+                set_bright.setImageResource(R.drawable.ic_brt_2);
+            } else {
+                set_bright.setImageResource(R.drawable.ic_brt_3);
+            }
             locationItem.setBrightness(progress);
-            setIcon();
         }
+    }
+
+    @Override
+    public void onMarkerDragStart(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDrag(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDragEnd(Marker marker) {
+        LatLng latLng = marker.getPosition();
+        locationItem.setLatitude(latLng.latitude);
+        locationItem.setLongitude(latLng.longitude);
     }
 
     @Override

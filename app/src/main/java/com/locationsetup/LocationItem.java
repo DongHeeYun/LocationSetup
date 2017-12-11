@@ -59,25 +59,28 @@ public class LocationItem implements Serializable {
         this.name = name;
     }
 
-    public void changeWifi() {
+    public int changeWifi() {
         if(wifi < 2)
             wifi++;
         else
             wifi = 0;
+        return wifi;
     }
 
-    public void changeBluetooth() {
+    public int changeBluetooth() {
         if(bluetooth < 2)
             bluetooth++;
         else
             bluetooth=0;
+        return bluetooth;
     }
 
-    public void changeSound() {
+    public int changeSound() {
         if(sound < 3)
             sound++;
         else
             sound=0;
+        return sound;
     }
 
     public String getId() {
