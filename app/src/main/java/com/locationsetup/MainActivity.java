@@ -118,6 +118,26 @@ public class MainActivity extends AppCompatActivity implements ListFragment.OnAd
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        switch (id) {
+            case android.R.id.home:
+                mDrawerLayout.openDrawer(GravityCompat.START);
+                return true;
+            case R.id.action_settings:
+                return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
     public void initialize() {
         mFirebaseManager = FirebaseManager.getInstance();
         mFirebaseManager.setItemChangedListener(this);

@@ -73,8 +73,7 @@ public class GeofenceManager implements GoogleApiClient.ConnectionCallbacks, Goo
                             GEOFENCE_RADIUS_IN_METERS
                     )
                     .setExpirationDuration(GEOFENCE_EXPIRATION_IN_MILLISECONDS)
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-                            Geofence.GEOFENCE_TRANSITION_EXIT)
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
                     .build());
         }
 
